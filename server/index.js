@@ -26,13 +26,19 @@ function isValidStoredMobile(mobile) {
   return /^\+91[6-9]\d{9}$/.test(String(mobile || ''));
 }
 
-async function msg91Fetch(path, params) {
+/**
+ * MSG91's v5 OTP endpoints aren't fully consistent with each other:
+ * - SendOTP:  POST .../otp?template_id=&mobile=&authkey=      (authkey in the query string)
+ * - Verify:   GET  .../otp/verify?otp=&mobile=  + header authkey
+ * - Resend:   GET  .../otp/retry?authkey=&retrytype=&mobile=  (authkey in the query string)
+ * See https://docs.msg91.com/otp for the current per-endpoint spec.
+ */
+async function msg91Request({ path, method, query, authAsHeader }) {
   const url = new URL(`${MSG91_BASE}${path}`);
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { authkey: MSG91_AUTH_KEY, 'Content-Type': 'application/json' },
-  });
+  for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
+  const headers = { 'Content-Type': 'application/json' };
+  if (authAsHeader) headers.authkey = MSG91_AUTH_KEY;
+  const res = await fetch(url, { method, headers });
   const data = await res.json().catch(() => ({}));
   return { ok: res.ok && data.type !== 'error', data };
 }
@@ -46,7 +52,11 @@ app.post('/api/otp/send', async (req, res) => {
     return res.status(503).json({ ok: false, error: 'OTP service is not configured on the server yet.' });
   }
   try {
-    const { ok, data } = await msg91Fetch('', { template_id: MSG91_TEMPLATE_ID, mobile: toMsg91Mobile(mobile) });
+    const { ok, data } = await msg91Request({
+      path: '',
+      method: 'POST',
+      query: { template_id: MSG91_TEMPLATE_ID, mobile: toMsg91Mobile(mobile), authkey: MSG91_AUTH_KEY },
+    });
     if (!ok) return res.status(502).json({ ok: false, error: data.message || 'Failed to send OTP.' });
     res.json({ ok: true });
   } catch (err) {
@@ -64,7 +74,12 @@ app.post('/api/otp/verify', async (req, res) => {
     return res.status(503).json({ ok: false, error: 'OTP service is not configured on the server yet.' });
   }
   try {
-    const { ok, data } = await msg91Fetch('/verify', { mobile: toMsg91Mobile(mobile), otp: String(otp) });
+    const { ok, data } = await msg91Request({
+      path: '/verify',
+      method: 'GET',
+      query: { mobile: toMsg91Mobile(mobile), otp: String(otp) },
+      authAsHeader: true,
+    });
     if (!ok) return res.status(401).json({ ok: false, error: data.message || 'Incorrect or expired code.' });
     res.json({ ok: true });
   } catch (err) {
@@ -82,9 +97,14 @@ app.post('/api/otp/resend', async (req, res) => {
     return res.status(503).json({ ok: false, error: 'OTP service is not configured on the server yet.' });
   }
   try {
-    const { ok, data } = await msg91Fetch('/retry', {
-      mobile: toMsg91Mobile(mobile),
-      retrytype: via === 'voice' ? 'voice' : 'text',
+    const { ok, data } = await msg91Request({
+      path: '/retry',
+      method: 'GET',
+      query: {
+        mobile: toMsg91Mobile(mobile),
+        authkey: MSG91_AUTH_KEY,
+        retrytype: via === 'voice' ? 'voice' : 'text',
+      },
     });
     if (!ok) return res.status(502).json({ ok: false, error: data.message || 'Failed to resend OTP.' });
     res.json({ ok: true });
