@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #12130e; }
+    a { color: #d99a3d; }
+    a:hover { color: #ecc27a; }
+    @keyframes checkIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes scanPulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+    @keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</helmet>
+
+<div style="--bg-deep:#12130e; --bg-panel:#1b1d15; --bg-panel-2:#22251a; --border:#3a3d2e; --khaki:#c9bd97; --steel:#5c6670; --text:#ece7d4; --text-muted:#9b9a86; --olive:#5c6b34; --eligible:#7a8b4f; --not-eligible:#9c5b3c; --amber:#d99a3d; font-family:'IBM Plex Sans',sans-serif; background:var(--bg-deep); background-image: repeating-linear-gradient(135deg, rgba(201,189,151,0.035) 0px, rgba(201,189,151,0.035) 1px, transparent 1px, transparent 22px); min-height:100vh; color:var(--text); display:flex; flex-direction:column;">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:22px clamp(20px,5vw,56px); border-bottom:1px solid var(--border); flex-wrap:wrap; gap:16px;">
+    <div style="display:flex; align-items:baseline; gap:10px;">
+      <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:22px; letter-spacing:2px; color:var(--text);">MISSION<span style="color:var(--amber);">FAUJ</span></div>
+      <div style="font-size:11px; letter-spacing:1.5px; color:var(--text-muted); text-transform:uppercase;">Entry Scheme Eligibility Scan</div>
+      <a href="Help Center.dc.html" style="font-size:11px; color:var(--text-muted); text-decoration:none; border:1px solid var(--border); padding:5px 10px;">Help</a>
+      <a href="Glossary.dc.html" style="font-size:11px; color:var(--text-muted); text-decoration:none; border:1px solid var(--border); padding:5px 10px;">Glossary</a>
+    </div>
+    <div style="display:flex; align-items:center; gap:0;">
+      <sc-for list="{{ checkpoints }}" as="cp" hint-placeholder-count="3">
+        <div style="display:flex; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; clip-path:polygon(0 0,100% 0,92% 100%,0% 100%); background:{{ cp.bg }};">
+            <span style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px; color:{{ cp.color }};">{{ cp.num }}</span>
+            <span style="font-family:'Rajdhani',sans-serif; font-weight:600; font-size:12px; letter-spacing:1.5px; color:{{ cp.color }}; text-transform:uppercase;">{{ cp.label }}</span>
+          </div>
+          <sc-if value="{{ cp.showLine }}">
+            <div style="width:20px; height:1px; background:var(--border);"></div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="flex:1; display:flex; justify-content:center; padding:clamp(24px,5vw,60px) clamp(20px,5vw,56px) 60px;">
+    <div style="width:100%; max-width:920px;">
+
+      <sc-if value="{{ isStep0 }}" hint-placeholder-val="{{ true }}">
+        <div style="animation:riseIn .5s ease both; padding-top:clamp(20px,6vh,60px); text-align:center; display:flex; flex-direction:column; align-items:center; gap:22px;">
+          <div style="font-size:12px; letter-spacing:3px; color:var(--amber); text-transform:uppercase; font-weight:600;">Briefing · 15 Entry Schemes Covered</div>
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(36px,6vw,58px); line-height:1.05; letter-spacing:1px; text-transform:uppercase; max-width:720px;">Eligibility Briefing</div>
+          <div style="color:var(--text-muted); font-size:16px; line-height:1.6; max-width:560px;">Answer a few questions on age, education and status. We'll scan every officer-entry scheme — NDA, CDS, AFCAT, TES, TGC, SSC, NCC Special Entry, UES, JAG, ACC, TA — and show exactly where you stand.</div>
+          <div style="display:flex; gap:14px; margin-top:8px; flex-wrap:wrap; justify-content:center;">
+            <div style="border:1px solid var(--border); background:var(--bg-panel); padding:10px 18px; clip-path:polygon(10px 0,100% 0,100% 100%,0 100%,0 10px);">
+              <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:20px; color:var(--khaki);">15</div>
+              <div style="font-size:10px; letter-spacing:1px; color:var(--text-muted); text-transform:uppercase;">Entry Schemes</div>
+            </div>
+            <div style="border:1px solid var(--border); background:var(--bg-panel); padding:10px 18px; clip-path:polygon(10px 0,100% 0,100% 100%,0 100%,0 10px);">
+              <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:20px; color:var(--khaki);">NDA·CDS·AFCAT</div>
+              <div style="font-size:10px; letter-spacing:1px; color:var(--text-muted); text-transform:uppercase;">Written Prep Live</div>
+            </div>
+            <div style="border:1px solid var(--border); background:var(--bg-panel); padding:10px 18px; clip-path:polygon(10px 0,100% 0,100% 100%,0 100%,0 10px);">
+              <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:20px; color:var(--khaki);">SSB</div>
+              <div style="font-size:10px; letter-spacing:1px; color:var(--text-muted); text-transform:uppercase;">All-Scheme Ready</div>
+            </div>
+          </div>
+          <button onClick="{{ goToProfile }}" style="margin-top:18px; background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; letter-spacing:1.5px; text-transform:uppercase; padding:16px 34px; clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%); cursor:pointer;" style-hover="background:#ecc27a;">Begin Briefing →</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep1 }}">
+        <div style="animation:riseIn .4s ease both; display:flex; flex-direction:column; gap:28px;">
+          <div>
+            <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">Step 02</div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,4vw,36px); text-transform:uppercase; letter-spacing:1px;">Candidate Profile</div>
+          </div>
+
+          <div>
+            <div style="font-size:11px; letter-spacing:1.5px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;">Age (years)</div>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <button onClick="{{ decAge }}" style="width:44px; height:44px; background:var(--bg-panel-2); border:1px solid var(--border); color:var(--khaki); font-size:20px; cursor:pointer; clip-path:polygon(6px 0,100% 0,100% 100%,0 100%,0 6px);">−</button>
+              <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:28px; width:90px; text-align:center;">{{ ageDisplay }}</div>
+              <button onClick="{{ incAge }}" style="width:44px; height:44px; background:var(--bg-panel-2); border:1px solid var(--border); color:var(--khaki); font-size:20px; cursor:pointer; clip-path:polygon(6px 0,100% 0,100% 100%,0 100%,0 6px);">+</button>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:11px; letter-spacing:1.5px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;">Gender</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <sc-for list="{{ genderOptions }}" as="opt" hint-placeholder-count="2">
+                <button onClick="{{ opt.onClick }}" style="{{ opt.style }}">{{ opt.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:11px; letter-spacing:1.5px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;">Marital Status</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <sc-for list="{{ maritalOptions }}" as="opt" hint-placeholder-count="2">
+                <button onClick="{{ opt.onClick }}" style="{{ opt.style }}">{{ opt.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:11px; letter-spacing:1.5px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;">Education Level</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <sc-for list="{{ educationOptions }}" as="opt" hint-placeholder-count="5">
+                <button onClick="{{ opt.onClick }}" style="{{ opt.style }}">{{ opt.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <sc-if value="{{ showStream }}">
+            <div>
+              <div style="font-size:11px; letter-spacing:1.5px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;">12th Stream</div>
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <sc-for list="{{ streamOptions }}" as="opt" hint-placeholder-count="3">
+                  <button onClick="{{ opt.onClick }}" style="{{ opt.style }}">{{ opt.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <div>
+            <div style="font-size:11px; letter-spacing:1.5px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;">NCC Cadet Status</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <sc-for list="{{ nccOptions }}" as="opt" hint-placeholder-count="4">
+                <button onClick="{{ opt.onClick }}" style="{{ opt.style }}">{{ opt.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:14px; margin-top:10px; flex-wrap:wrap;">
+            <button onClick="{{ goToWelcome }}" style="background:transparent; color:var(--text-muted); border:1px solid var(--border); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:14px; letter-spacing:1px; text-transform:uppercase; padding:14px 26px; cursor:pointer;">← Back</button>
+            <button onClick="{{ runScan }}" style="background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; padding:14px 30px; clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%); cursor:pointer;">Run Eligibility Scan →</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep2 }}">
+        <div style="animation:riseIn .3s ease both; display:flex; flex-direction:column; gap:26px; padding-top:clamp(20px,6vh,60px); align-items:center; text-align:center;">
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(24px,4vw,32px); text-transform:uppercase; letter-spacing:1px; animation:scanPulse 1.3s ease infinite;">Scanning Eligibility…</div>
+          <div style="width:100%; max-width:480px; height:6px; background:var(--bg-panel-2); border:1px solid var(--border);">
+            <div style="height:100%; background:var(--amber); width:{{ scanProgress }}%; transition:width 1.4s cubic-bezier(.3,.7,.3,1);"></div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:420px; text-align:left;">
+            <sc-for list="{{ scanRows }}" as="row" hint-placeholder-count="6">
+              <div style="display:flex; align-items:center; gap:10px; font-size:13px; color:var(--text-muted); animation:checkIn .35s ease both; animation-delay:{{ row.delay }};">
+                <span style="color:var(--eligible); font-family:'Rajdhani',sans-serif; font-weight:700;">✓</span>{{ row.name }}
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep3 }}">
+        <div style="animation:riseIn .4s ease both; display:flex; flex-direction:column; gap:30px;">
+          <div>
+            <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">Scan Complete</div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,4vw,36px); text-transform:uppercase; letter-spacing:1px;">Your Eligibility Report</div>
+            <div style="color:var(--text-muted); font-size:14px; margin-top:8px;">{{ summaryLine }}</div>
+          </div>
+
+          <div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+              <div style="width:10px; height:10px; background:var(--eligible);"></div>
+              <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase;">Eligible — {{ eligibleCount }}</div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px;">
+              <sc-for list="{{ eligibleSchemes }}" as="s" hint-placeholder-count="4">
+                <div style="background:var(--bg-panel); border:1px solid var(--eligible); border-left-width:4px; clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%); padding:16px 18px;">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                    <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:16px; letter-spacing:.5px;">{{ s.name }}</div>
+                    <div style="font-size:10px; letter-spacing:1px; color:var(--eligible); border:1px solid var(--eligible); padding:2px 8px; text-transform:uppercase; white-space:nowrap;">Eligible</div>
+                  </div>
+                  <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; margin-top:2px;">{{ s.branch }}</div>
+                  <div style="font-size:13px; color:var(--khaki); margin-top:10px; line-height:1.5;">{{ s.reason }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+              <div style="width:10px; height:10px; background:var(--not-eligible);"></div>
+              <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted);">Not Eligible — {{ notEligibleCount }}</div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px;">
+              <sc-for list="{{ notEligibleSchemes }}" as="s" hint-placeholder-count="4">
+                <div style="background:var(--bg-panel-2); opacity:.7; border:1px solid var(--border); padding:16px 18px;">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                    <div style="font-family:'Rajdhani',sans-serif; font-weight:600; font-size:15px; color:var(--steel);">{{ s.name }}</div>
+                    <div style="font-size:10px; letter-spacing:1px; color:var(--not-eligible); border:1px solid var(--not-eligible); padding:2px 8px; text-transform:uppercase; white-space:nowrap;">Not Yet</div>
+                  </div>
+                  <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; margin-top:2px;">{{ s.branch }}</div>
+                  <div style="font-size:13px; color:var(--text-muted); margin-top:10px; line-height:1.5;">{{ s.reason }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:6px;">
+            <button onClick="{{ goToWelcome }}" style="background:transparent; color:var(--text-muted); border:1px solid var(--border); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:14px; letter-spacing:1px; text-transform:uppercase; padding:14px 26px; cursor:pointer;">Retake Briefing</button>
+            <button onClick="{{ goToPrep }}" style="background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; padding:14px 30px; clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%); cursor:pointer;">Continue to Written-Exam Prep →</button>
+          </div>
+
+          <div style="font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:14px; line-height:1.6;">Illustrative criteria for design preview. Production eligibility rules are pulled live from admin-editable scheme tables per the current official notification.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep4 }}">
+        <div style="animation:riseIn .4s ease both; display:flex; flex-direction:column; gap:30px;">
+          <div>
+            <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">Step 04</div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,4vw,36px); text-transform:uppercase; letter-spacing:1px;">Written-Exam Prep</div>
+            <div style="color:var(--text-muted); font-size:14px; margin-top:8px; max-width:560px;">Based on your eligibility, start with one of these — MVP written prep covers NDA, CDS and AFCAT.</div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px;">
+            <sc-for list="{{ prepExams }}" as="ex" hint-placeholder-count="3">
+              <div style="background:var(--bg-panel); border:1px solid var(--border); border-left:4px solid var(--amber); clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%); padding:20px 22px; display:flex; flex-direction:column; gap:10px;">
+                <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:20px; letter-spacing:.5px; text-transform:uppercase;">{{ ex.name }}</div>
+                <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;">{{ ex.subjects }}</div>
+                <div style="font-size:13px; color:var(--khaki); line-height:1.5;">{{ ex.note }}</div>
+                <a href="Written Exam Prep.dc.html" style="margin-top:6px; align-self:flex-start; background:transparent; color:var(--amber); border:1px solid var(--amber); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13px; letter-spacing:1px; text-transform:uppercase; padding:10px 18px; text-decoration:none;">Start {{ ex.name }} Prep →</a>
+              </div>
+            </sc-for>
+          </div>
+
+          <button onClick="{{ goToWelcome }}" style="align-self:flex-start; background:transparent; color:var(--text-muted); border:1px solid var(--border); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:14px; letter-spacing:1px; text-transform:uppercase; padding:14px 26px; cursor:pointer;">← Back to Briefing</button>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const EDU_OPTIONS = ['Class 12 (appearing)', 'Class 12 (pass)', "Graduate (final yr)", 'Graduate (pass)', 'Postgraduate'];
+const STREAM_OPTIONS = ['Science (PCM)', 'Science (Other)', 'Commerce', 'Arts'];
+const NCC_OPTIONS = ['None', 'Army Wing (C Cert)', 'Navy Wing (C Cert)', 'Air Wing (C Cert)'];
+const GENDER_OPTIONS = ['Male', 'Female'];
+const MARITAL_OPTIONS = ['Unmarried', 'Married'];
+
+class Component extends DCLogic {
+  state = {
+    step: 0,
+    age: 18.5,
+    gender: 'Male',
+    marital: 'Unmarried',
+    education: 'Class 12 (appearing)',
+    stream: 'Science (PCM)',
+    ncc: 'None',
+    scanProgress: 0
+  };
+
+  scanTimer = null;
+  advanceTimer = null;
+
+  componentWillUnmount() {
+    clearTimeout(this.scanTimer);
+    clearTimeout(this.advanceTimer);
+  }
+
+  goToWelcome = () => this.setState({ step: 0, scanProgress: 0 });
+  goToProfile = () => this.setState({ step: 1 });
+  goToPrep = () => this.setState({ step: 4 });
+
+  incAge = () => this.setState(s => ({ age: Math.min(45, s.age + 0.5) }));
+  decAge = () => this.setState(s => ({ age: Math.max(16, s.age - 0.5) }));
+
+  setField(key, val) {
+    this.setState({ [key]: val });
+  }
+
+  runScan = () => {
+    this.setState({ step: 2, scanProgress: 0 });
+    this.scanTimer = setTimeout(() => this.setState({ scanProgress: 100 }), 60);
+    this.advanceTimer = setTimeout(() => this.setState({ step: 3 }), 1700);
+  };
+
+  segmentedStyle(active) {
+    const base = "font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13px; letter-spacing:.5px; padding:11px 18px; cursor:pointer; border:1px solid ";
+    if (active) return base + "var(--amber); background:var(--amber); color:#1b1500;";
+    return base + "var(--border); background:var(--bg-panel); color:var(--text);";
+  }
+
+  buildOptions(list, currentVal, key) {
+    return list.map(label => ({
+      label,
+      onClick: () => this.setField(key, label),
+      style: this.segmentedStyle(currentVal === label)
+    }));
+  }
+
+  computeSchemes(s) {
+    const age = s.age;
+    const is12th = s.education.startsWith('Class 12');
+    const isGrad = s.education.startsWith('Graduate') || s.education === 'Postgraduate';
+    const pcm = s.stream === 'Science (PCM)';
+    const unmarried = s.marital === 'Unmarried';
+    const nccCert = s.ncc !== 'None';
+
+    const schemes = [];
+
+    schemes.push({
+      name: 'NDA — Army Wing', branch: 'Indian Army',
+      eligible: age >= 16.5 && age <= 19.5 && is12th && unmarried,
+      okReason: 'Age 16.5–19.5, 12th pass/appearing, unmarried — all met.',
+      failReason: !unmarried ? 'Requires unmarried status.' : (!(age >= 16.5 && age <= 19.5) ? `Age window is 16.5–19.5; you are ${age}.` : 'Requires Class 12 pass or appearing.')
+    });
+    schemes.push({
+      name: 'NDA — Naval Wing', branch: 'Indian Navy',
+      eligible: age >= 16.5 && age <= 19.5 && is12th && pcm && unmarried,
+      okReason: 'Age, 12th with Physics & Maths, and unmarried status all met.',
+      failReason: !pcm ? 'Requires 12th with Physics & Mathematics.' : (!(age >= 16.5 && age <= 19.5) ? `Age window is 16.5–19.5; you are ${age}.` : 'Requires unmarried status.')
+    });
+    schemes.push({
+      name: 'NDA — Air Force Wing', branch: 'Indian Air Force',
+      eligible: age >= 16.5 && age <= 19.5 && is12th && pcm && unmarried,
+      okReason: 'Age, 12th PCM, and unmarried status all met.',
+      failReason: !pcm ? 'Requires 12th with Physics, Chemistry & Mathematics.' : (!(age >= 16.5 && age <= 19.5) ? `Age window is 16.5–19.5; you are ${age}.` : 'Requires unmarried status.')
+    });
+    schemes.push({
+      name: 'Naval Academy — 10+2 (B.Tech)', branch: 'Indian Navy · Executive Branch',
+      eligible: age >= 16.5 && age <= 19.5 && is12th && pcm && unmarried,
+      okReason: 'Age, 12th with Physics & Maths, and unmarried status all met. Same NDA/NA written exam, 4-yr B.Tech track.',
+      failReason: !pcm ? 'Requires 12th with Physics & Mathematics.' : (!(age >= 16.5 && age <= 19.5) ? `Age window is 16.5–19.5; you are ${age}.` : 'Requires unmarried status.')
+    });
+    schemes.push({
+      name: 'CDS — IMA', branch: 'Indian Military Academy',
+      eligible: age >= 19 && age <= 24 && isGrad && unmarried,
+      okReason: 'Age 19–24, graduate, unmarried — all met.',
+      failReason: !isGrad ? 'Requires a graduate degree (or final year).' : (!(age >= 19 && age <= 24) ? `Age window is 19–24; you are ${age}.` : 'Requires unmarried status.')
+    });
+    schemes.push({
+      name: 'CDS — INA', branch: 'Indian Naval Academy',
+      eligible: age >= 19 && age <= 24 && isGrad && unmarried,
+      okReason: 'Age 19–24, graduate, unmarried — all met.',
+      failReason: !isGrad ? 'Requires a graduate degree (or final year).' : (!(age >= 19 && age <= 24) ? `Age window is 19–24; you are ${age}.` : 'Requires unmarried status.')
+    });
+    schemes.push({
+      name: 'CDS — AFA', branch: 'Air Force Academy',
+      eligible: age >= 19 && age <= 24 && isGrad && pcm && unmarried,
+      okReason: 'Age 19–24, graduate with 12th PCM, unmarried — all met.',
+      failReason: !pcm ? 'Requires 12th with Physics & Mathematics.' : (!isGrad ? 'Requires a graduate degree (or final year).' : (!(age >= 19 && age <= 24) ? `Age window is 19–24; you are ${age}.` : 'Requires unmarried status.'))
+    });
+    schemes.push({
+      name: 'CDS — OTA (Non-Tech)', branch: 'Officers Training Academy',
+      eligible: age >= 19 && age <= 25 && isGrad,
+      okReason: 'Age 19–25 and graduate — all met. Open to men and women.',
+      failReason: !isGrad ? 'Requires a graduate degree (or final year).' : `Age window is 19–25; you are ${age}.`
+    });
+    schemes.push({
+      name: 'AFCAT — Flying Branch', branch: 'Indian Air Force',
+      eligible: age >= 20 && age <= 24 && isGrad && pcm,
+      okReason: 'Age 20–24, graduate with 12th PCM — all met.',
+      failReason: !pcm ? 'Requires 12th with Physics & Mathematics.' : (!isGrad ? 'Requires a graduate degree.' : `Age window is 20–24; you are ${age}.`)
+    });
+    schemes.push({
+      name: 'AFCAT — Ground Duty (Tech)', branch: 'Indian Air Force',
+      eligible: age >= 20 && age <= 26 && isGrad,
+      okReason: 'Age 20–26 and graduate (engineering-relevant) — all met.',
+      failReason: !isGrad ? 'Requires a graduate/BE/BTech degree.' : `Age window is 20–26; you are ${age}.`
+    });
+    schemes.push({
+      name: 'TES — Technical Entry', branch: 'Indian Army',
+      eligible: age >= 16.5 && age <= 19.5 && is12th && pcm,
+      okReason: 'Age 16.5–19.5 with 12th PCM — all met.',
+      failReason: !pcm ? 'Requires 12th with Physics, Chemistry & Mathematics.' : `Age window is 16.5–19.5; you are ${age}.`
+    });
+    schemes.push({
+      name: 'NCC Special Entry', branch: 'Army / Navy / Air Force',
+      eligible: age >= 19 && age <= 24 && isGrad && nccCert,
+      okReason: 'Age 19–24, graduate, with a Senior Division "C" Certificate — all met.',
+      failReason: !nccCert ? 'Requires a Senior Division NCC "C" Certificate.' : (!isGrad ? 'Requires a graduate degree.' : `Age window is 19–24; you are ${age}.`)
+    });
+    schemes.push({
+      name: 'Territorial Army', branch: 'Territorial Army',
+      eligible: age >= 18 && age <= 42 && isGrad,
+      okReason: 'Age 18–42 and graduate, alongside civilian employment — all met.',
+      failReason: !isGrad ? 'Requires a graduate degree.' : `Age window is 18–42; you are ${age}.`
+    });
+
+    return schemes;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const step = s.step;
+    const stepLabels = ['Briefing', 'Profile', 'Assessment', 'Written Prep'];
+    const activeIdx = step === 0 ? 0 : (step === 1 ? 1 : (step === 4 ? 3 : 2));
+    const checkpoints = stepLabels.map((label, i) => ({
+      num: '0' + (i + 1),
+      label,
+      bg: 'transparent',
+      color: i < activeIdx ? 'var(--eligible)' : (i === activeIdx ? 'var(--amber)' : 'var(--steel)'),
+      showLine: i < stepLabels.length - 1
+    }));
+
+    const allSchemes = this.computeSchemes(s);
+    const eligibleSchemes = allSchemes.filter(x => x.eligible).map(x => ({ name: x.name, branch: x.branch, reason: x.okReason }));
+    const notEligibleSchemes = allSchemes.filter(x => !x.eligible).map(x => ({ name: x.name, branch: x.branch, reason: x.failReason }));
+
+    const scanRows = allSchemes.map((x, i) => ({ name: x.name, delay: (i * 0.12) + 's' }));
+
+    return {
+      isStep0: step === 0,
+      isStep1: step === 1,
+      isStep2: step === 2,
+      isStep3: step === 3,
+      isStep4: step === 4,
+      checkpoints,
+      goToWelcome: this.goToWelcome,
+      goToProfile: this.goToProfile,
+      goToPrep: this.goToPrep,
+      prepExams: [
+        { name: 'NDA', subjects: 'Maths · GAT (English + GK)', note: 'School-leaver pattern — algebra, trig, physics/chem basics, current affairs.' },
+        { name: 'CDS', subjects: 'English · GK · Elementary Maths', note: 'Graduate-level GK depth; OTA candidates skip the Maths paper.' },
+        { name: 'AFCAT', subjects: 'Verbal · Numerical · Reasoning · GK · MilAv', note: 'Add EKT only if applying for a technical branch.' }
+      ],
+      incAge: this.incAge,
+      decAge: this.decAge,
+      ageDisplay: s.age,
+      genderOptions: this.buildOptions(GENDER_OPTIONS, s.gender, 'gender'),
+      maritalOptions: this.buildOptions(MARITAL_OPTIONS, s.marital, 'marital'),
+      educationOptions: this.buildOptions(EDU_OPTIONS, s.education, 'education'),
+      streamOptions: this.buildOptions(STREAM_OPTIONS, s.stream, 'stream'),
+      nccOptions: this.buildOptions(NCC_OPTIONS, s.ncc, 'ncc'),
+      showStream: s.education.startsWith('Class 12'),
+      runScan: this.runScan,
+      scanProgress: s.scanProgress,
+      scanRows,
+      summaryLine: `Age ${s.age} · ${s.education}${s.education.startsWith('Class 12') ? ' · ' + s.stream : ''} · ${s.gender} · ${s.marital} · NCC: ${s.ncc}`,
+      eligibleCount: eligibleSchemes.length,
+      notEligibleCount: notEligibleSchemes.length,
+      eligibleSchemes,
+      notEligibleSchemes
+    };
+  }
+}
+
+</script>
+</body>
+</html>

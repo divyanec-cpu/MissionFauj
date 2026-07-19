@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #12130e; }
+    a { color: #d99a3d; }
+    a:hover { color: #ecc27a; }
+    @keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</helmet>
+
+<div style="--bg-deep:#12130e; --bg-panel:#1b1d15; --bg-panel-2:#22251a; --border:#3a3d2e; --khaki:#c9bd97; --steel:#5c6670; --text:#ece7d4; --text-muted:#9b9a86; --eligible:#7a8b4f; --amber:#d99a3d; font-family:'IBM Plex Sans',sans-serif; background:var(--bg-deep); min-height:100vh; color:var(--text);">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:22px clamp(20px,5vw,56px); border-bottom:1px solid var(--border); flex-wrap:wrap; gap:16px;">
+    <div style="display:flex; align-items:baseline; gap:14px;">
+      <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:22px; letter-spacing:2px; color:var(--text);">MISSION<span style="color:var(--amber);">FAUJ</span></div>
+      <div style="font-size:11px; letter-spacing:1.5px; color:var(--text-muted); text-transform:uppercase;">Expert Consultation</div>
+      <a href="Help Center.dc.html" style="font-size:11px; color:var(--text-muted); text-decoration:none; border:1px solid var(--border); padding:5px 10px;">Help</a>
+      <a href="Glossary.dc.html" style="font-size:11px; color:var(--text-muted); text-decoration:none; border:1px solid var(--border); padding:5px 10px;">Glossary</a>
+      <a href="SSB Training.dc.html" style="font-size:12px; color:var(--text-muted); text-decoration:none; border:1px solid var(--border); padding:6px 12px;">← Back to SSB Training</a>
+    </div>
+    <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <sc-for list="{{ categoryTabs }}" as="t" hint-placeholder-count="5">
+          <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ !isList }}">
+      <button onClick="{{ backToList }}" style="background:transparent; color:var(--text-muted); border:1px solid var(--border); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13px; letter-spacing:1px; text-transform:uppercase; padding:10px 18px; cursor:pointer;">← Back to Experts</button>
+    </sc-if>
+  </div>
+
+  <div style="padding:clamp(24px,4vw,48px) clamp(20px,5vw,56px) 64px;">
+
+    <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:riseIn .4s ease both; display:flex; flex-direction:column; gap:22px;">
+        <div style="max-width:620px;">
+          <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">1-on-1 · Retired Panel</div>
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,4vw,34px); text-transform:uppercase; letter-spacing:1px;">Book a Consultation</div>
+          <p style="color:var(--text-muted); font-size:14px; margin:8px 0 0; line-height:1.5;">Direct sessions with retired IOs, GTOs, Psychologists and Board Presidents — feedback grounded in real board experience, alongside your self-review practice.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px;">
+          <sc-for list="{{ filteredExperts }}" as="ex" hint-placeholder-count="4">
+            <div style="background:var(--bg-panel); border:1px solid var(--border); border-left:3px solid {{ ex.accent }}; padding:20px; display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                <div style="font-size:10px; letter-spacing:1px; color:{{ ex.accent }}; text-transform:uppercase;">{{ ex.role }}</div>
+                <sc-if value="{{ ex.bonus }}">
+                  <div style="font-size:9px; letter-spacing:1px; color:var(--eligible); border:1px solid var(--eligible); padding:2px 7px; text-transform:uppercase;">Bonus</div>
+                </sc-if>
+              </div>
+              <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:18px;">{{ ex.name }}</div>
+              <div style="font-size:12px; color:var(--text-muted);">{{ ex.credentials }}</div>
+              <p style="font-size:13px; color:var(--khaki); line-height:1.5; margin:6px 0;">{{ ex.bio }}</p>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:8px;">
+                <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:17px; color:var(--khaki);">{{ ex.price }}</div>
+                <button onClick="{{ ex.onClick }}" style="background:transparent; color:{{ ex.accent }}; border:1px solid {{ ex.accent }}; font-family:'Rajdhani',sans-serif; font-weight:600; font-size:12px; letter-spacing:1px; text-transform:uppercase; padding:9px 16px; cursor:pointer;">Book Session →</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:14px; line-height:1.6;">Expert consultation is a deviation from the current MVP scope, flagged and built at explicit request.</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isSlot }}">
+      <div style="animation:riseIn .35s ease both; max-width:480px; display:flex; flex-direction:column; gap:20px;">
+        <div>
+          <div style="font-size:12px; letter-spacing:2px; color:{{ selExpert.accent }}; text-transform:uppercase; font-weight:600;">{{ selExpert.role }}</div>
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(24px,3.6vw,30px); text-transform:uppercase; letter-spacing:1px;">{{ selExpert.name }}</div>
+          <p style="color:var(--text-muted); font-size:13px; margin:8px 0 0;">{{ selExpert.credentials }} · {{ selExpert.price }} / session</p>
+        </div>
+        <div>
+          <div style="font-size:11px; letter-spacing:1.5px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;">Choose a Slot</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <sc-for list="{{ slotOptions }}" as="sl" hint-placeholder-count="4">
+              <button onClick="{{ sl.onClick }}" style="{{ sl.style }}">{{ sl.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <button onClick="{{ confirmBooking }}" style="align-self:flex-start; background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; padding:14px 28px; cursor:pointer;">Confirm Booking →</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isConfirmed }}">
+      <div style="animation:riseIn .4s ease both; max-width:460px; display:flex; flex-direction:column; gap:16px;">
+        <div style="width:44px; height:44px; background:var(--eligible); display:flex; align-items:center; justify-content:center; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:20px; color:#0f130a;">✓</div>
+        <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(24px,3.6vw,30px); text-transform:uppercase; letter-spacing:1px;">Session Booked</div>
+        <p style="color:var(--text-muted); font-size:14px; line-height:1.5; margin:0;">{{ selExpert.name }} — {{ selSlot }}. Confirmation and a join link will follow in-app.</p>
+        <button onClick="{{ backToList }}" style="align-self:flex-start; background:transparent; color:var(--text-muted); border:1px solid var(--border); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13px; letter-spacing:1px; text-transform:uppercase; padding:12px 22px; cursor:pointer;">Back to Experts</button>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const PLACEHOLDER = '— to be added —';
+const EXPERTS = [
+  { role: 'Interviewing Officer', category: 'IO', accent: 'var(--amber)', name: PLACEHOLDER, credentials: PLACEHOLDER, bio: PLACEHOLDER, price: PLACEHOLDER },
+  { role: 'Group Testing Officer', category: 'GTO', accent: 'var(--steel)', name: PLACEHOLDER, credentials: PLACEHOLDER, bio: PLACEHOLDER, price: PLACEHOLDER },
+  { role: 'Psychologist', category: 'Psychologist', accent: 'var(--khaki)', name: PLACEHOLDER, credentials: PLACEHOLDER, bio: PLACEHOLDER, price: PLACEHOLDER },
+  { role: 'Board President', category: 'Board President', accent: 'var(--eligible)', name: PLACEHOLDER, credentials: PLACEHOLDER, bio: PLACEHOLDER, price: PLACEHOLDER },
+  { role: 'English & Confidence Coach', category: 'English & Confidence', accent: 'var(--eligible)', name: PLACEHOLDER, credentials: PLACEHOLDER, bio: PLACEHOLDER, price: PLACEHOLDER, bonus: true }
+];
+const SLOTS = ['Today, 6:00 PM', 'Tomorrow, 11:00 AM', 'Tomorrow, 6:00 PM', 'Sat, 10:00 AM'];
+
+class Component extends DCLogic {
+  state = { view: 'list', category: 'All', selectedExpert: null, selectedSlot: null };
+
+  setCategory = (c) => this.setState({ category: c });
+  bookExpert = (ex) => this.setState({ view: 'slot', selectedExpert: ex, selectedSlot: null });
+  pickSlot = (sl) => this.setState({ selectedSlot: sl });
+  confirmBooking = () => this.setState({ view: 'confirmed' });
+  backToList = () => this.setState({ view: 'list' });
+
+  pillStyle(active) {
+    const base = "font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13px; letter-spacing:.5px; padding:9px 16px; cursor:pointer; border:1px solid ";
+    return active ? base + "var(--amber); background:var(--amber); color:#1b1500;" : base + "var(--border); background:var(--bg-panel); color:var(--text);";
+  }
+
+  renderVals() {
+    const s = this.state;
+    const categories = ['All', 'IO', 'GTO', 'Psychologist', 'Board President', 'English & Confidence'];
+    const categoryTabs = categories.map(c => ({ label: c, onClick: () => this.setCategory(c), style: this.pillStyle(s.category === c) }));
+
+    const filteredExperts = EXPERTS.filter(e => s.category === 'All' || e.category === s.category)
+      .map(e => ({ ...e, onClick: () => this.bookExpert(e) }));
+
+    const slotOptions = SLOTS.map(sl => ({ label: sl, onClick: () => this.pickSlot(sl), style: this.pillStyle(s.selectedSlot === sl) }));
+
+    return {
+      isList: s.view === 'list',
+      isSlot: s.view === 'slot',
+      isConfirmed: s.view === 'confirmed',
+      categoryTabs,
+      filteredExperts,
+      backToList: this.backToList,
+      selExpert: s.selectedExpert || {},
+      slotOptions,
+      confirmBooking: this.confirmBooking,
+      selSlot: s.selectedSlot
+    };
+  }
+}
+
+</script>
+</body>
+</html>

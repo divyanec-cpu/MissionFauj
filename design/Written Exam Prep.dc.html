@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #12130e; }
+    a { color: #d99a3d; }
+    a:hover { color: #ecc27a; }
+    @keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</helmet>
+
+<div style="--bg-deep:#12130e; --bg-panel:#1b1d15; --bg-panel-2:#22251a; --border:#3a3d2e; --khaki:#c9bd97; --steel:#5c6670; --text:#ece7d4; --text-muted:#9b9a86; --eligible:#7a8b4f; --amber:#d99a3d; font-family:'IBM Plex Sans',sans-serif; background:var(--bg-deep); min-height:100vh; color:var(--text);">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:20px clamp(20px,5vw,56px); border-bottom:1px solid var(--border); flex-wrap:wrap; gap:16px;">
+    <div style="display:flex; align-items:baseline; gap:10px;">
+      <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:22px; letter-spacing:2px; color:var(--text);">MISSION<span style="color:var(--amber);">FAUJ</span></div>
+      <div style="font-size:11px; letter-spacing:1.5px; color:var(--text-muted); text-transform:uppercase;">Written-Exam Prep</div>
+      <a href="Help Center.dc.html" style="font-size:11px; color:var(--text-muted); text-decoration:none; border:1px solid var(--color-divider); padding:5px 10px;">Help</a>
+      <a href="Glossary.dc.html" style="font-size:11px; color:var(--text-muted); text-decoration:none; border:1px solid var(--color-divider); padding:5px 10px;">Glossary</a>
+    </div>
+    <sc-if value="{{ isHub }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex; gap:8px;">
+        <sc-for list="{{ examTabs }}" as="t" hint-placeholder-count="3">
+          <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ !isHub }}">
+      <button onClick="{{ goBack }}" style="background:transparent; color:var(--text-muted); border:1px solid var(--border); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13px; letter-spacing:1px; text-transform:uppercase; padding:10px 18px; cursor:pointer;">{{ backLabel }}</button>
+    </sc-if>
+  </div>
+
+  <div style="padding:clamp(24px,4vw,48px) clamp(20px,5vw,56px) 64px;">
+
+    <sc-if value="{{ isNda }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:riseIn .4s ease both; display:grid; grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr); gap:28px; align-items:start;">
+        <div style="display:flex; flex-direction:column; gap:22px;">
+          <div>
+            <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">NDA — Written Exam</div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,3.6vw,34px); text-transform:uppercase; letter-spacing:1px;">Subjects &amp; Chapters</div>
+          </div>
+          <sc-for list="{{ ndaSubjects }}" as="subj" hint-placeholder-count="2">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">
+                <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:17px; text-transform:uppercase; letter-spacing:.5px;">{{ subj.name }}</div>
+                <div style="font-size:12px; color:var(--text-muted);">{{ subj.completed }}/{{ subj.total }} chapters</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <sc-for list="{{ subj.chapters }}" as="ch" hint-placeholder-count="4">
+                  <div onClick="{{ ch.onClick }}" style="display:flex; align-items:center; gap:12px; background:var(--bg-panel); border:1px solid var(--border); padding:12px 16px; cursor:pointer;">
+                    <div style="width:34px; height:34px; flex:none; background:var(--bg-panel-2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; color:{{ ch.pctColor }};">{{ ch.pct }}%</div>
+                    <div style="flex:1;">
+                      <div style="font-size:14px; font-weight:600;">{{ ch.name }}</div>
+                      <div style="height:3px; background:var(--bg-panel-2); margin-top:6px;"><div style="height:100%; background:var(--amber); width:{{ ch.pct }}%;"></div></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <div style="background:var(--bg-panel); border:1px solid var(--border); border-left:3px solid var(--amber); padding:16px 18px;">
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">Daily Streak</div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:26px; color:var(--amber);">12 Days</div>
+            <div style="display:flex; gap:4px; margin-top:10px;">
+              <sc-for list="{{ streakDays }}" as="d" hint-placeholder-count="7">
+                <div style="width:14px; height:14px; background:{{ d.color }};"></div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--bg-panel); border:1px solid var(--border); padding:16px 18px;">
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px;">Mock Tests</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <sc-for list="{{ ndaMocks }}" as="m" hint-placeholder-count="3">
+                <button style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-panel-2); border:1px solid var(--border); color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:13px; padding:10px 14px; cursor:pointer; text-align:left;">
+                  {{ m.name }}<span style="color:var(--text-muted); font-size:11px;">{{ m.meta }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--bg-panel); border:1px solid var(--border); padding:16px 18px;">
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px;">Current Affairs</div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <sc-for list="{{ digestPosts }}" as="p" hint-placeholder-count="3">
+                <div>
+                  <div style="font-size:10px; letter-spacing:1px; color:var(--amber); text-transform:uppercase;">{{ p.date }}</div>
+                  <div style="font-size:13px; margin-top:2px; line-height:1.4;">{{ p.title }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isCds }}">
+      <div style="animation:riseIn .4s ease both; display:flex; flex-direction:column; gap:26px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px;">
+          <div>
+            <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">CDS — Written Exam</div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,3.6vw,34px); text-transform:uppercase; letter-spacing:1px;">Track &amp; Subjects</div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <sc-for list="{{ cdsTracks }}" as="t" hint-placeholder-count="2">
+              <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px;">
+          <sc-for list="{{ cdsSubjects }}" as="subj" hint-placeholder-count="3">
+            <div style="background:var(--bg-panel); border:1px solid var(--border); opacity:{{ subj.opacity }}; padding:20px; display:flex; flex-direction:column; gap:10px;">
+              <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:18px; text-transform:uppercase;">{{ subj.name }}</div>
+              <div style="font-size:12px; color:var(--text-muted);">{{ subj.note }}</div>
+              <div style="height:6px; background:var(--bg-panel-2); margin-top:4px;"><div style="height:100%; background:var(--amber); width:{{ subj.progress }}%;"></div></div>
+              <div style="font-size:11px; color:var(--text-muted);">{{ subj.progress }}% covered</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div>
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px;">Mock Tests</div>
+          <div style="display:flex; gap:14px; flex-wrap:wrap;">
+            <sc-for list="{{ cdsMocks }}" as="m" hint-placeholder-count="4">
+              <button style="background:var(--bg-panel); border:1px solid var(--border); color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:13px; padding:14px 18px; cursor:pointer; min-width:160px; text-align:left;">
+                <div style="font-weight:600;">{{ m.name }}</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">{{ m.meta }}</div>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px;">Current Affairs Digest</div>
+          <div style="display:flex; gap:14px; overflow-x:auto; padding-bottom:6px;">
+            <sc-for list="{{ digestPosts }}" as="p" hint-placeholder-count="3">
+              <div style="background:var(--bg-panel); border:1px solid var(--border); padding:14px 16px; min-width:220px; flex:none;">
+                <div style="font-size:10px; letter-spacing:1px; color:var(--amber); text-transform:uppercase;">{{ p.date }}</div>
+                <div style="font-size:13px; margin-top:4px; line-height:1.4;">{{ p.title }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isAfcat }}">
+      <div style="animation:riseIn .4s ease both; display:flex; flex-direction:column; gap:26px;">
+        <div>
+          <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">AFCAT — Written Exam</div>
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,3.6vw,34px); text-transform:uppercase; letter-spacing:1px;">Two Tracks</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:20px;">
+          <div style="background:var(--bg-panel); border:1px solid var(--border); border-top:3px solid var(--amber); padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:18px; text-transform:uppercase;">AFCAT (Common)</div>
+              <div style="font-size:10px; letter-spacing:1px; color:var(--eligible); border:1px solid var(--eligible); padding:2px 8px; text-transform:uppercase;">+3 / −1 / 0</div>
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Required for every applicant, all branches.</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <sc-for list="{{ afcatSubjects }}" as="s" hint-placeholder-count="4">
+                <div style="display:flex; justify-content:space-between; background:var(--bg-panel-2); border:1px solid var(--border); padding:10px 14px; font-size:13px;">
+                  {{ s.name }}<span style="color:var(--text-muted); font-size:11px;">{{ s.count }} q</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--bg-panel); border:1px solid var(--border); border-top:3px solid var(--steel); padding:20px;">
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:18px; text-transform:uppercase; margin-bottom:6px;">EKT (Technical, Optional)</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Only for candidates applying to a technical branch.</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+              <sc-for list="{{ ektBranches }}" as="b" hint-placeholder-count="3">
+                <button onClick="{{ b.onClick }}" style="{{ b.style }}">{{ b.label }}</button>
+              </sc-for>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <sc-for list="{{ ektTopics }}" as="s" hint-placeholder-count="3">
+                <div style="display:flex; justify-content:space-between; background:var(--bg-panel-2); border:1px solid var(--border); padding:10px 14px; font-size:13px;">
+                  {{ s }}
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px;">Mock Tests</div>
+          <div style="display:flex; gap:14px; flex-wrap:wrap;">
+            <sc-for list="{{ afcatMocks }}" as="m" hint-placeholder-count="3">
+              <button style="background:var(--bg-panel); border:1px solid var(--border); color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:13px; padding:14px 18px; cursor:pointer; min-width:160px; text-align:left;">
+                <div style="font-weight:600;">{{ m.name }}</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">{{ m.meta }}</div>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px;">Current Affairs Digest</div>
+          <div style="display:flex; gap:14px; overflow-x:auto; padding-bottom:6px;">
+            <sc-for list="{{ digestPosts }}" as="p" hint-placeholder-count="3">
+              <div style="background:var(--bg-panel); border:1px solid var(--border); padding:14px 16px; min-width:220px; flex:none;">
+                <div style="font-size:10px; letter-spacing:1px; color:var(--amber); text-transform:uppercase;">{{ p.date }}</div>
+                <div style="font-size:13px; margin-top:4px; line-height:1.4;">{{ p.title }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isHub }}">
+      <sc-if value="{{ noEligibleExam }}">
+        <div style="max-width:520px; padding-top:40px; display:flex; flex-direction:column; gap:12px;">
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:24px; text-transform:uppercase;">No Written-Exam Track Yet</div>
+          <p style="color:var(--text-muted); margin:0;">Your eligibility scan didn't match NDA, CDS or AFCAT. SSB practice stays open for every entry scheme regardless.</p>
+        </div>
+      </sc-if>
+      <sc-if value="{{ !noEligibleExam }}">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; flex-wrap:wrap; gap:14px; background:var(--bg-panel); border:1px solid var(--border); border-left:3px solid var(--eligible); padding:16px 20px;">
+          <div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:.5px;">Cleared Your Written Exam?</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">SSB practice is open for every entry scheme, whenever you're ready.</div>
+          </div>
+          <button onClick="{{ openSsb }}" style="background:transparent; color:var(--eligible); border:1px solid var(--eligible); font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; text-transform:uppercase; padding:11px 20px; cursor:pointer; white-space:nowrap;">Enrol for SSB →</button>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+          <button onClick="{{ openFeatures }}" style="background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; padding:14px 28px; cursor:pointer;">See What MissionFauj Can Do →</button>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ isFeatures }}">
+      <div style="animation:riseIn .4s ease both; max-width:760px; display:flex; flex-direction:column; gap:22px;">
+        <div>
+          <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">Full Access</div>
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,4vw,34px); text-transform:uppercase; letter-spacing:1px;">What MissionFauj Gives You</div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px;">
+          <sc-for list="{{ featureList }}" as="f" hint-placeholder-count="6">
+            <div style="background:var(--bg-panel); border:1px solid var(--border); border-left:3px solid var(--amber); padding:16px 18px;">
+              <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; text-transform:uppercase; margin-bottom:6px;">{{ f.title }}</div>
+              <div style="font-size:13px; color:var(--text-muted); line-height:1.5;">{{ f.body }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <button onClick="{{ openPricing }}" style="align-self:flex-start; background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; padding:14px 28px; cursor:pointer;">Continue to Plans →</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isPricing }}">
+      <div style="animation:riseIn .4s ease both; max-width:900px; display:flex; flex-direction:column; gap:22px;">
+        <div>
+          <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">{{ activeExam }} Track</div>
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,4vw,34px); text-transform:uppercase; letter-spacing:1px;">Choose Your Plan</div>
+          <p style="color:var(--text-muted); margin:6px 0 0; max-width:520px;">Plans are scoped to {{ activeExam }} — SSB pricing varies separately by entry scheme.</p>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px;">
+          <sc-for list="{{ pricingPlans }}" as="p" hint-placeholder-count="3">
+            <div style="background:var(--bg-panel); border:1px solid {{ p.borderColor }}; padding:22px; display:flex; flex-direction:column; gap:10px; position:relative;">
+              <sc-if value="{{ p.badge }}">
+                <div style="position:absolute; top:-1px; right:-1px; background:var(--amber); color:#1b1500; font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:4px 10px; font-family:'Rajdhani',sans-serif; font-weight:700;">{{ p.badge }}</div>
+              </sc-if>
+              <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:17px; text-transform:uppercase;">{{ p.name }}</div>
+              <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:30px; color:var(--khaki);">{{ p.price }}</div>
+              <div style="font-size:12px; color:var(--text-muted);">{{ p.period }}</div>
+              <div style="height:1px; background:var(--border); margin:6px 0;"></div>
+              <div style="display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--khaki);">
+                <sc-for list="{{ p.perks }}" as="perk" hint-placeholder-count="3">
+                  <div>✓ {{ perk }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-start; margin-top:6px;">
+          <button style="background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; letter-spacing:1.5px; text-transform:uppercase; padding:16px 32px; cursor:pointer;">Start 7-Day Free Trial →</button>
+          <div style="font-size:12px; color:var(--text-muted);">No payment required today. Cancel anytime before day 7.</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isSsb }}">
+      <div style="animation:riseIn .4s ease both; max-width:900px; display:flex; flex-direction:column; gap:22px;">
+        <div>
+          <div style="font-size:12px; letter-spacing:2px; color:var(--eligible); text-transform:uppercase; font-weight:600;">{{ activeExam }} Track · SSB Prep</div>
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,4vw,34px); text-transform:uppercase; letter-spacing:1px;">Enrol for SSB Training</div>
+          <p style="color:var(--text-muted); margin:6px 0 0; max-width:560px;">SSB practice content is the same across every entry scheme — pricing and PIQ/interview framing are tuned to {{ activeExam }} candidates.</p>
+        </div>
+
+        <sc-if value="{{ isExistingMemberFlag }}">
+          <div style="background:var(--bg-panel-2); border:1px solid var(--amber); padding:14px 18px; display:flex; align-items:center; gap:12px;">
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; text-transform:uppercase; color:var(--amber);">Member Discount</div>
+            <div style="font-size:13px; color:var(--khaki);">You're already on MissionFauj — 20% off SSB Prep, applied automatically at checkout.</div>
+          </div>
+        </sc-if>
+
+        <div style="background:var(--bg-panel); border:1px solid var(--amber); padding:24px; max-width:320px; display:flex; flex-direction:column; gap:10px;">
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:17px; text-transform:uppercase;">SSB Prep — {{ activeExam }}</div>
+          <div style="display:flex; align-items:baseline; gap:10px;">
+            <sc-if value="{{ isExistingMemberFlag }}">
+              <div style="font-size:15px; color:var(--text-muted); text-decoration:line-through;">{{ ssbFullPrice }}</div>
+            </sc-if>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:30px; color:var(--khaki);">{{ ssbShownPrice }}</div>
+          </div>
+          <div style="font-size:12px; color:var(--text-muted);">per month</div>
+          <div style="height:1px; background:var(--border); margin:6px 0;"></div>
+          <div style="display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--khaki);">
+            <div>✓ WAT, TAT, SRT &amp; SD practice</div>
+            <div>✓ Self-review rubrics — no auto-scoring</div>
+            <div>✓ OLQ self-assessment, all 15 qualities</div>
+            <div>✓ PPDT &amp; Lecturette — timed, text-based</div>
+            <div>✓ {{ activeExam }}-tuned PIQ &amp; interview framing</div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-start;">
+          <button style="background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; letter-spacing:1.5px; text-transform:uppercase; padding:16px 32px; cursor:pointer;">Start SSB Prep — 7-Day Free Trial →</button>
+          <div style="font-size:12px; color:var(--text-muted);">No payment required today. Discount locks in when the trial converts.</div>
+          <a href="SSB Training.dc.html" style="font-size:12px; color:var(--eligible); margin-top:4px;">Explore all SSB Training modules →</a>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isChapter }}">
+      <div style="animation:riseIn .35s ease both; max-width:720px;">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">{{ activeExam }} / {{ chapterSubject }} / <span style="color:var(--khaki);">{{ chapterName }}</span></div>
+        <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,4vw,34px); text-transform:uppercase; letter-spacing:1px; margin-bottom:20px;">{{ chapterName }}</div>
+
+        <div style="display:flex; flex-direction:column; gap:20px; font-size:15px; line-height:1.7; color:var(--khaki);">
+          <div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); margin-bottom:6px;">Definition</div>
+            <p style="margin:0;">A quadratic equation is a second-degree polynomial equation in one variable, written as ax² + bx + c = 0, where a ≠ 0. The highest power of the variable is 2, which gives the equation its characteristic parabolic graph when plotted.</p>
+          </div>
+          <div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); margin-bottom:6px;">Nature of Roots</div>
+            <p style="margin:0;">The discriminant D = b² − 4ac tells you what kind of roots the equation has: real and distinct if D &gt; 0, real and equal if D = 0, and complex conjugates if D &lt; 0. NDA papers frequently test this without asking you to solve the full equation.</p>
+          </div>
+          <div style="background:var(--bg-panel); border:1px solid var(--border); border-left:3px solid var(--amber); padding:16px 18px;">
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); margin-bottom:8px;">Key Formulas</div>
+            <div style="font-size:14px; display:flex; flex-direction:column; gap:6px;">
+              <div>Roots: x = (−b ± √D) / 2a</div>
+              <div>Sum of roots: α + β = −b/a</div>
+              <div>Product of roots: αβ = c/a</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); margin-bottom:6px;">Solved Example</div>
+            <p style="margin:0;">Solve x² − 5x + 6 = 0. Here D = 25 − 24 = 1, so the roots are real and distinct: x = (5 ± 1)/2, giving x = 3 or x = 2. Check: 3 + 2 = 5 = −b/a and 3 × 2 = 6 = c/a — both match, confirming the roots.</p>
+          </div>
+        </div>
+
+        <button style="margin-top:26px; background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; padding:14px 28px; cursor:pointer;">Practice Questions →</button>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;eligibleNda&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Eligibility (demo)&quot;}, &quot;eligibleCds&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Eligibility (demo)&quot;}, &quot;eligibleAfcat&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Eligibility (demo)&quot;}, &quot;isExistingMember&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Membership (demo)&quot;}}">
+const NDA_MATHS_CHAPTERS = [
+  { name: 'Algebra', pct: 80 },
+  { name: 'Matrices & Determinants', pct: 60 },
+  { name: 'Trigonometry', pct: 45 },
+  { name: 'Quadratic Equations', pct: 30 },
+  { name: 'Analytical Geometry', pct: 10 },
+  { name: 'Differential Calculus', pct: 0 },
+  { name: 'Integral Calculus', pct: 0 },
+  { name: 'Vector Algebra & Statistics', pct: 0 }
+];
+const NDA_GAT_CHAPTERS = [
+  { name: 'English — Grammar & Usage', pct: 70 },
+  { name: 'English — Comprehension', pct: 55 },
+  { name: 'GK — Physics & Chemistry', pct: 40 },
+  { name: 'GK — History & Geography', pct: 20 },
+  { name: 'GK — Current Events', pct: 15 }
+];
+
+class Component extends DCLogic {
+  state = {
+    examTab: 'NDA',
+    view: 'hub',
+    cdsTrack: 'IMA/INA/AFA',
+    ektBranch: 'Mechanical',
+    chapterSubject: '',
+    chapterName: ''
+  };
+
+  setExam = (name) => this.setState({ examTab: name, view: 'hub' });
+  setCdsTrack = (t) => this.setState({ cdsTrack: t });
+  setEktBranch = (b) => this.setState({ ektBranch: b });
+  openChapter = (subject, chapter) => this.setState({ view: 'chapter', chapterSubject: subject, chapterName: chapter });
+  openFeatures = () => this.setState({ view: 'features' });
+  openPricing = () => this.setState({ view: 'pricing' });
+  openSsb = () => this.setState({ view: 'ssb' });
+  goBack = () => {
+    const v = this.state.view;
+    if (v === 'pricing') this.setState({ view: 'features' });
+    else this.setState({ view: 'hub' });
+  };
+
+  pillStyle(active) {
+    const base = "font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13px; letter-spacing:1px; text-transform:uppercase; padding:9px 18px; cursor:pointer; border:1px solid ";
+    return active ? base + "var(--amber); background:var(--amber); color:#1b1500;" : base + "var(--border); background:transparent; color:var(--text);";
+  }
+
+  pctColor(pct) {
+    if (pct >= 60) return 'var(--eligible)';
+    if (pct > 0) return 'var(--amber)';
+    return 'var(--text-muted)';
+  }
+
+  renderVals() {
+    const s = this.state;
+    const p = this.props;
+
+    const eligibleNames = ['NDA', 'CDS', 'AFCAT'].filter(name =>
+      (name === 'NDA' && (p.eligibleNda ?? true)) ||
+      (name === 'CDS' && (p.eligibleCds ?? false)) ||
+      (name === 'AFCAT' && (p.eligibleAfcat ?? false))
+    );
+    const noEligibleExam = eligibleNames.length === 0;
+    const effectiveExam = eligibleNames.includes(s.examTab) ? s.examTab : eligibleNames[0];
+
+    const examTabs = eligibleNames.map(name => ({
+      label: name, onClick: () => this.setExam(name), style: this.pillStyle(effectiveExam === name)
+    }));
+
+    const ndaSubjects = [
+      { name: 'Mathematics', total: NDA_MATHS_CHAPTERS.length, completed: NDA_MATHS_CHAPTERS.filter(c => c.pct >= 60).length,
+        chapters: NDA_MATHS_CHAPTERS.map(c => ({ name: c.name, pct: c.pct, pctColor: this.pctColor(c.pct), onClick: () => this.openChapter('Mathematics', c.name) })) },
+      { name: 'GAT — English & GK', total: NDA_GAT_CHAPTERS.length, completed: NDA_GAT_CHAPTERS.filter(c => c.pct >= 60).length,
+        chapters: NDA_GAT_CHAPTERS.map(c => ({ name: c.name, pct: c.pct, pctColor: this.pctColor(c.pct), onClick: () => this.openChapter('GAT', c.name) })) }
+    ];
+
+    const cdsTracks = ['IMA/INA/AFA', 'OTA (Non-Tech)'].map(t => ({
+      label: t, onClick: () => this.setCdsTrack(t), style: this.pillStyle(s.cdsTrack === t)
+    }));
+    const isOta = s.cdsTrack === 'OTA (Non-Tech)';
+    const cdsSubjects = [
+      { name: 'English', note: 'Grammar, vocabulary, comprehension.', progress: 65, opacity: 1 },
+      { name: 'General Knowledge', note: 'Graduate-level current affairs & static GK.', progress: 40, opacity: 1 },
+      { name: 'Elementary Mathematics', note: isOta ? 'Not required for OTA candidates.' : 'Class 10-level arithmetic, algebra, geometry.', progress: isOta ? 0 : 50, opacity: isOta ? 0.4 : 1 }
+    ];
+
+    const ektBranches = ['Mechanical', 'Computer Science', 'Electrical & Electronics'].map(b => ({
+      label: b, onClick: () => this.setEktBranch(b), style: this.pillStyle(s.ektBranch === b)
+    }));
+    const ektTopicsMap = {
+      'Mechanical': ['Thermodynamics & Heat Engines', 'Strength of Materials', 'Machine Design'],
+      'Computer Science': ['Data Structures & Algorithms', 'Operating Systems', 'Computer Networks'],
+      'Electrical & Electronics': ['Circuit Theory', 'Digital Electronics', 'Control Systems']
+    };
+
+    const digestPosts = [
+      { date: 'Jul 18', title: 'India-France joint naval exercise Varuna concludes off Goa coast.' },
+      { date: 'Jul 15', title: 'DRDO conducts successful trial of indigenous hypersonic test vehicle.' },
+      { date: 'Jul 11', title: 'New Chief of Defence Staff outlines theaterisation roadmap.' }
+    ];
+
+    const streakDays = [1,1,1,1,1,1,0].map(v => ({ color: v ? 'var(--amber)' : 'var(--bg-panel-2)' }));
+
+    const backLabel = s.view === 'pricing' ? '← Back to App Overview' : (s.view === 'features' || s.view === 'ssb' ? '← Back to ' + effectiveExam : '← Back to ' + effectiveExam);
+    const ssbBasePrices = { NDA: 799, CDS: 899, AFCAT: 899 };
+    const ssbBase = ssbBasePrices[effectiveExam] || 799;
+    const isExistingMemberFlag = p.isExistingMember ?? true;
+    const ssbShown = isExistingMemberFlag ? Math.round(ssbBase * 0.8) : ssbBase;
+
+    const featureList = [
+      { title: 'Chapter Notes', body: 'Original, exam-focused notes for every NDA, CDS and AFCAT subject.' },
+      { title: 'Mock Tests', body: 'Full-length and sectional mocks with real exam timing and negative marking.' },
+      { title: 'Current Affairs Digest', body: 'Short, dated briefs written for officer-entry GK — not scraped news. Chat with AI Assist on any brief to go deeper on that topic or a related subject.' },
+      { title: 'Quizzes', body: 'Bite-sized quizzes on current affairs and static GK, built to reinforce each digest brief and chapter.' },
+      { title: 'SSB Practice, All Schemes', body: 'WAT, TAT, SRT and self-description practice for all 15 entry schemes.' },
+      { title: 'OLQ Self-Assessment', body: 'Reflect against the 15 Officer-Like Qualities — self-review, not a score.' },
+      { title: 'Daily Streak', body: 'A simple habit tracker to keep your prep consistent through the cycle.' },
+      { title: 'AI Assist', body: 'AI-based feedback on your written mock performance — accuracy trends, weak chapters, time management. SSB practice stays self-review, never AI-scored.' }
+    ];
+
+    const pricingPlans = [
+      { name: 'Monthly', price: '₹499', period: 'per month', borderColor: 'var(--border)', badge: '', perks: [effectiveExam + ' written prep', 'Full-length & sectional mocks', 'Current-affairs digest'] },
+      { name: 'Quarterly', price: '₹1,199', period: 'per quarter · ₹400/mo', borderColor: 'var(--amber)', badge: 'Most Popular', perks: ['Everything in Monthly', 'SSB practice, all schemes', 'OLQ self-assessment'] },
+      { name: 'Till Exam Day', price: '₹1,999', period: 'one-time, valid till result', borderColor: 'var(--border)', badge: '', perks: ['Everything in Quarterly', 'Locked-in access through your exam cycle'] }
+    ];
+
+    return {
+      isHub: s.view === 'hub',
+      isChapter: s.view === 'chapter',
+      isFeatures: s.view === 'features',
+      isPricing: s.view === 'pricing',
+      isSsb: s.view === 'ssb',
+      isExistingMemberFlag,
+      ssbFullPrice: '₹' + ssbBase,
+      ssbShownPrice: '₹' + ssbShown,
+      openSsb: this.openSsb,
+      noEligibleExam,
+      isNda: s.view === 'hub' && effectiveExam === 'NDA',
+      isCds: s.view === 'hub' && effectiveExam === 'CDS',
+      isAfcat: s.view === 'hub' && effectiveExam === 'AFCAT',
+      activeExam: effectiveExam,
+      backLabel,
+      featureList,
+      pricingPlans,
+      examTabs,
+      openFeatures: this.openFeatures,
+      openPricing: this.openPricing,
+      goBack: this.goBack,
+      ndaSubjects,
+      streakDays,
+      ndaMocks: [
+        { name: 'Full-Length — Maths', meta: '120 min · 120 Q' },
+        { name: 'Full-Length — GAT', meta: '150 min · 150 Q' },
+        { name: 'Sectional — Trigonometry', meta: '20 min · 20 Q' }
+      ],
+      cdsTracks,
+      cdsSubjects,
+      cdsMocks: [
+        { name: 'Full-Length — English', meta: '120 min · 100 Q' },
+        { name: 'Full-Length — GK', meta: '120 min · 100 Q' },
+        { name: 'Full-Length — Maths', meta: isOta ? 'Not applicable (OTA)' : '120 min · 100 Q' },
+        { name: 'Sectional — Comprehension', meta: '20 min · 15 Q' }
+      ],
+      afcatSubjects: [
+        { name: 'Verbal Ability', count: 25 },
+        { name: 'Numerical Ability', count: 25 },
+        { name: 'Reasoning & Military Aptitude', count: 25 },
+        { name: 'General Awareness', count: 25 }
+      ],
+      ektBranches,
+      ektTopics: ektTopicsMap[s.ektBranch],
+      afcatMocks: [
+        { name: 'Full-Length AFCAT', meta: '120 min · 100 Q' },
+        { name: 'EKT — ' + s.ektBranch, meta: '45 min · 50 Q' },
+        { name: 'Sectional — Reasoning', meta: '20 min · 25 Q' }
+      ],
+      digestPosts,
+      chapterSubject: s.chapterSubject,
+      chapterName: s.chapterName
+    };
+  }
+}
+
+</script>
+</body>
+</html>

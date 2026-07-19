@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #12130e; }
+    a { color: #d99a3d; }
+    a:hover { color: #ecc27a; }
+  </style>
+</helmet>
+
+<div style="--bg-deep:#12130e; --bg-panel:#1b1d15; --bg-panel-2:#22251a; --border:#3a3d2e; --khaki:#c9bd97; --steel:#5c6670; --text:#ece7d4; --text-muted:#9b9a86; --eligible:#7a8b4f; --amber:#d99a3d; font-family:'IBM Plex Sans',sans-serif; background:var(--bg-deep); min-height:100vh; color:var(--text);">
+
+  <div style="display:flex; align-items:baseline; gap:14px; padding:22px clamp(20px,5vw,56px); border-bottom:1px solid var(--border); flex-wrap:wrap;">
+    <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:22px; letter-spacing:2px;">MISSION<span style="color:var(--amber);">FAUJ</span></div>
+    <div style="font-size:11px; letter-spacing:1.5px; color:var(--text-muted); text-transform:uppercase;">Help Centre</div>
+    <div style="display:flex; gap:8px; margin-left:auto; flex-wrap:wrap;">
+      <a href="Onboarding Eligibility.dc.html" style="font-size:11px; color:var(--text-muted); text-decoration:none; border:1px solid var(--border); padding:5px 10px;">Eligibility</a>
+      <a href="Written Exam Prep.dc.html" style="font-size:11px; color:var(--text-muted); text-decoration:none; border:1px solid var(--border); padding:5px 10px;">Written Prep</a>
+      <a href="SSB Training.dc.html" style="font-size:11px; color:var(--text-muted); text-decoration:none; border:1px solid var(--border); padding:5px 10px;">SSB Training</a>
+      <a href="Glossary.dc.html" style="font-size:11px; color:var(--text-muted); text-decoration:none; border:1px solid var(--border); padding:5px 10px;">Glossary</a>
+    </div>
+  </div>
+
+  <div style="padding:clamp(24px,4vw,48px) clamp(20px,5vw,56px) 64px; max-width:960px; display:flex; flex-direction:column; gap:40px;">
+
+    <div>
+      <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,4vw,34px); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Eligibility, Process &amp; FAQs</div>
+      <p style="color:var(--text-muted); font-size:14px; margin:0;">Everything about who qualifies for what, how SSB actually runs, and answers to what candidates ask most.</p>
+    </div>
+
+    <div>
+      <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); margin-bottom:14px;">Eligibility &amp; Qualification</div>
+      <div style="overflow-x:auto;">
+        <div style="min-width:720px; display:flex; flex-direction:column;">
+          <div style="display:grid; grid-template-columns:1.4fr 1fr 1.6fr 0.9fr; gap:10px; padding:10px 12px; font-size:11px; letter-spacing:1px; color:var(--text-muted); text-transform:uppercase; border-bottom:1px solid var(--border);">
+            <div>Scheme</div><div>Age</div><div>Education</div><div>Marital Status</div>
+          </div>
+          <sc-for list="{{ eligibilityRows }}" as="r" hint-placeholder-count="6">
+            <div style="display:grid; grid-template-columns:1.4fr 1fr 1.6fr 0.9fr; gap:10px; padding:12px; font-size:13px; border-bottom:1px solid var(--border);">
+              <div style="font-weight:600; color:var(--khaki);">{{ r.name }}</div>
+              <div style="color:var(--text-muted);">{{ r.age }}</div>
+              <div>{{ r.education }}</div>
+              <div style="color:var(--text-muted);">{{ r.marital }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="font-size:11px; color:var(--text-muted); margin-top:10px;">Illustrative reference. Production figures come from admin-editable scheme tables per the current official notification.</div>
+    </div>
+
+    <div>
+      <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); margin-bottom:14px;">The SSB Process, Day by Day</div>
+      <div style="display:flex; flex-direction:column; gap:0;">
+        <sc-for list="{{ ssbDays }}" as="d" hint-placeholder-count="5">
+          <div style="display:flex; gap:16px; padding:14px 0; border-bottom:1px solid var(--border);">
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; color:var(--amber); min-width:80px; flex:none; text-transform:uppercase;">{{ d.day }}</div>
+            <div>
+              <div style="font-weight:600; font-size:14px; margin-bottom:3px;">{{ d.title }}</div>
+              <div style="font-size:13px; color:var(--text-muted); line-height:1.5;">{{ d.desc }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); margin-bottom:14px;">Frequently Asked Questions</div>
+      <input value="{{ searchQuery }}" onChange="{{ onSearchChange }}" placeholder="Search FAQs — try 'age', 'AFCAT', 'conference'…" style="width:100%; max-width:420px; background:var(--bg-panel-2); border:1px solid var(--border); color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:13px; padding:12px 14px; margin-bottom:16px;">
+      <div style="display:flex; flex-direction:column; gap:0;">
+        <sc-for list="{{ filteredFaqs }}" as="f" hint-placeholder-count="6">
+          <div style="padding:14px 0; border-bottom:1px solid var(--border);">
+            <div style="font-weight:600; font-size:14px; color:var(--khaki); margin-bottom:5px;">{{ f.q }}</div>
+            <div style="font-size:13px; color:var(--text-muted); line-height:1.6;">{{ f.a }}</div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ noFaqResults }}">
+          <div style="padding:20px 0; font-size:13px; color:var(--text-muted);">No FAQs match "{{ searchQuery }}". Try a different term.</div>
+        </sc-if>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const ELIGIBILITY_ROWS = [
+  { name: 'National Defence Academy — Army, Navy & Air Force Wings', age: '16.5–19.5 years', education: 'Class 12 pass or appearing (Navy & Air Force wings also need Physics, Chemistry & Mathematics)', marital: 'Unmarried' },
+  { name: 'Naval Academy — 10+2 Cadet Entry (Bachelor of Technology)', age: '16.5–19.5 years', education: 'Class 12 with Physics, Chemistry & Mathematics', marital: 'Unmarried' },
+  { name: 'Combined Defence Services — Indian Military Academy / Indian Naval Academy', age: '19–24 years', education: 'Graduate degree', marital: 'Unmarried' },
+  { name: 'Combined Defence Services — Air Force Academy', age: '19–24 years', education: 'Graduate degree with Physics, Chemistry & Mathematics, or Bachelor of Engineering', marital: 'Unmarried' },
+  { name: 'Combined Defence Services — Officers Training Academy', age: '19–25 years', education: 'Graduate degree', marital: 'Unmarried, or a widow/divorcee without children' },
+  { name: 'Air Force Common Admission Test — Flying Branch', age: '20–24 years', education: 'Graduate degree with Class 12 Physics, Chemistry & Mathematics', marital: 'No restriction stated' },
+  { name: 'Air Force Common Admission Test — Ground Duty Branches', age: '20–26 years', education: 'Graduate degree, or Bachelor of Engineering / Technology', marital: 'No restriction stated' },
+  { name: 'Technical Entry Scheme', age: '16.5–19.5 years', education: 'Class 12 with Physics, Chemistry & Mathematics, 70% or above', marital: 'Unmarried' },
+  { name: 'National Cadet Corps Special Entry', age: '19–24 years', education: 'Graduate degree with a Senior Division NCC "C" Certificate', marital: 'Unmarried' },
+  { name: 'Territorial Army', age: '18–42 years', education: 'Graduate degree, with civilian employment', marital: 'No restriction stated' }
+];
+
+const SSB_DAYS = [
+  { day: 'Day 1', title: 'Screening', desc: 'Officer Intelligence Rating tests, then the Picture Perception & Discussion Test — a 30-second picture view, followed by individual narration and group discussion. Only candidates who clear screening continue.' },
+  { day: 'Day 2', title: 'Psychology', desc: 'The Thematic Apperception Test, Word Association Test, Situation Reaction Test and Self Description exercise, back to back, all timed and written only — no group discussion this day.' },
+  { day: 'Day 3', title: 'Group Testing Officer Tasks, Part 1', desc: 'Group Discussion, Group Planning Exercise, Progressive Group Task and the Group Obstacle Race.' },
+  { day: 'Day 4', title: 'Group Testing Officer Tasks, Part 2', desc: 'Half Group Task, Lecturette (a short talk on a given topic), Individual Obstacles, Command Task and the Final Group Task.' },
+  { day: 'Day 5', title: 'Conference', desc: 'A short individual conversation with the full board, followed by results the same day.' }
+];
+
+const FAQS = [
+  { q: 'What is the age limit for the National Defence Academy (NDA)?', a: 'Candidates must be between 16.5 and 19.5 years old at the time of joining, and unmarried throughout training.' },
+  { q: 'Can women apply for the National Defence Academy?', a: 'Yes — the National Defence Academy has been open to women candidates across all three wings (Army, Navy and Air Force) since 2021.' },
+  { q: 'How many attempts are allowed for Combined Defence Services (CDS)?', a: 'There is no fixed cap on attempts — eligibility is based on age and qualification for each notification, not a lifetime attempt limit.' },
+  { q: 'What happens if I fail the screening on Day 1 of the Services Selection Board (SSB)?', a: 'Candidates who are screened out are released the same day and do not proceed to the psychology or Group Testing Officer tasks. You can reapply in a future SSB call-up.' },
+  { q: 'Is the Services Selection Board interview only on one day?', a: 'No — the personal interview is usually spread across one or more days during the 4-day (screened-in) process, alongside psychology and Group Testing Officer tasks.' },
+  { q: 'Do I need Class 12 Physics, Chemistry & Mathematics for the Air Force Common Admission Test (AFCAT)?', a: 'Only for the Flying Branch, which requires Class 12 Physics, Chemistry & Mathematics alongside a graduate degree. Ground Duty branches vary by role.' },
+  { q: 'Is the Engineering Knowledge Test (EKT) compulsory for AFCAT?', a: 'The Engineering Knowledge Test is only required if you are applying for a technical branch. Its negative-marking scheme is currently unresolved — always confirm against the latest AFCAT notification.' },
+  { q: 'Can I reattempt the Services Selection Board after a conference-out?', a: 'Yes. A conference-out (not recommended after Day 5) does not bar you from applying again through a fresh notification.' },
+  { q: "What's the negative marking for the Air Force Common Admission Test?", a: 'The main AFCAT paper is +3 for a correct answer, −1 for a wrong answer, and 0 for an unattempted question.' },
+  { q: 'Does the National Defence Academy have the Naval Academy as a separate option?', a: 'Yes — the Naval Academy 10+2 Cadet Entry (Bachelor of Technology) shares the NDA/NA written exam but is a distinct 4-year Executive Branch track from the National Defence Academy\'s Naval Wing.' },
+  { q: 'What are Officer-Like Qualities (OLQs)?', a: 'Officer-Like Qualities are 15 traits — such as effective intelligence, courage, and cooperation — that the board assesses across every stage. No single task scores them.' }
+];
+
+class Component extends DCLogic {
+  state = { searchQuery: '' };
+  onSearchChange = (e) => this.setState({ searchQuery: e.target.value });
+
+  renderVals() {
+    const q = this.state.searchQuery.trim().toLowerCase();
+    const filteredFaqs = q ? FAQS.filter(f => f.q.toLowerCase().includes(q) || f.a.toLowerCase().includes(q)) : FAQS;
+    return {
+      eligibilityRows: ELIGIBILITY_ROWS,
+      ssbDays: SSB_DAYS,
+      searchQuery: this.state.searchQuery,
+      onSearchChange: this.onSearchChange,
+      filteredFaqs,
+      noFaqResults: filteredFaqs.length === 0
+    };
+  }
+}
+
+</script>
+</body>
+</html>

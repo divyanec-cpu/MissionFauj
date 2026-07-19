@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-deep: #12130e;
+  --color-bg-panel: #1b1d15;
+  --color-bg-panel-2: #22251a;
+  --color-border: #3a3d2e;
+  --color-khaki: #c9bd97;
+  --color-steel: #5c6670;
+  --color-ink: #ece7d4;
+  --color-muted: #9b9a86;
+  --color-olive: #5c6b34;
+  --color-eligible: #7a8b4f;
+  --color-not-eligible: #9c5b3c;
+  --color-amber: #d99a3d;
+  --color-amber-light: #ecc27a;
+
+  --font-heading: "Rajdhani", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+
+  --animate-rise-in: riseIn 0.5s ease both;
+  --animate-check-in: checkIn 0.35s ease both;
+  --animate-scan-pulse: scanPulse 1.3s ease infinite;
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes checkIn {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scanPulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg-deep);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+a {
+  color: var(--color-amber);
+}
+a:hover {
+  color: var(--color-amber-light);
+}
+
+::selection {
+  background: var(--color-amber);
+  color: #1b1500;
+}
+
+input,
+textarea {
+  font-family: var(--font-body);
+}
+input:focus,
+textarea:focus,
+button:focus-visible {
+  outline: 1px solid var(--color-amber);
+  outline-offset: 1px;
+}
+
+/* Sharp angular clip-path corners used across cards/buttons/badges — no rounded corners anywhere. */
+.clip-card {
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+}
+.clip-card-both {
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+}
+.clip-panel {
+  clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+}
+.clip-button {
+  clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+}
+.clip-input {
+  clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px);
+}
+
+.texture-hatch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(201, 189, 151, 0.035) 0px,
+    rgba(201, 189, 151, 0.035) 1px,
+    transparent 1px,
+    transparent 22px
+  );
+}

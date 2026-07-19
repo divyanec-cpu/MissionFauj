@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #12130e; }
+    a { color: #d99a3d; }
+    a:hover { color: #ecc27a; }
+    @keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</helmet>
+
+<div style="--bg-deep:#12130e; --bg-panel:#1b1d15; --bg-panel-2:#22251a; --border:#3a3d2e; --khaki:#c9bd97; --steel:#5c6670; --text:#ece7d4; --text-muted:#9b9a86; --eligible:#7a8b4f; --amber:#d99a3d; font-family:'IBM Plex Sans',sans-serif; background:var(--bg-deep); min-height:100vh; color:var(--text); display:flex; flex-direction:column;">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:22px clamp(20px,5vw,56px); border-bottom:1px solid var(--border); flex-wrap:wrap; gap:16px;">
+    <div style="display:flex; align-items:baseline; gap:10px;">
+      <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:22px; letter-spacing:2px; color:var(--text);">MISSION<span style="color:var(--amber);">FAUJ</span></div>
+      <div style="font-size:11px; letter-spacing:1.5px; color:var(--text-muted); text-transform:uppercase;">SSB Training</div>
+      <a href="Help Center.dc.html" style="font-size:11px; color:var(--text-muted); text-decoration:none; border:1px solid var(--border); padding:5px 10px;">Help</a>
+      <a href="Glossary.dc.html" style="font-size:11px; color:var(--text-muted); text-decoration:none; border:1px solid var(--border); padding:5px 10px;">Glossary</a>
+    </div>
+<sc-if value="{{ isHeaderStepper }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex; align-items:center;">
+        <sc-for list="{{ checkpoints }}" as="cp" hint-placeholder-count="3">
+          <div style="display:flex; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; clip-path:polygon(0 0,100% 0,92% 100%,0% 100%);">
+              <span style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px; color:{{ cp.color }};">{{ cp.num }}</span>
+              <span style="font-family:'Rajdhani',sans-serif; font-weight:600; font-size:12px; letter-spacing:1.5px; color:{{ cp.color }}; text-transform:uppercase;">{{ cp.label }}</span>
+            </div>
+            <sc-if value="{{ cp.showLine }}">
+              <div style="width:20px; height:1px; background:var(--border);"></div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ !isHeaderStepper }}">
+      <button onClick="{{ goToModules }}" style="background:transparent; color:var(--text-muted); border:1px solid var(--border); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13px; letter-spacing:1px; text-transform:uppercase; padding:10px 18px; cursor:pointer;">← Back to Modules</button>
+    </sc-if>
+  </div>
+
+  <div style="flex:1; display:flex; justify-content:center; padding:clamp(24px,5vw,56px) clamp(20px,5vw,56px) 60px;">
+    <div style="width:100%; max-width:880px;">
+
+      <sc-if value="{{ isStep0 }}" hint-placeholder-val="{{ true }}">
+        <div style="animation:riseIn .5s ease both; padding-top:clamp(20px,6vh,60px); display:flex; flex-direction:column; gap:20px; max-width:600px;">
+          <div style="font-size:12px; letter-spacing:3px; color:var(--amber); text-transform:uppercase; font-weight:600;">Scheme-Agnostic · All 15 Entry Routes</div>
+          <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(32px,5vw,48px); line-height:1.05; letter-spacing:1px; text-transform:uppercase;">Register for SSB Training</div>
+          <p style="color:var(--text-muted); font-size:16px; line-height:1.6; margin:0;">Psychology, Group Testing and Interview practice — every exercise ends in self-review against a rubric, never a canned "correct answer." Tell us your entry type and attempt count so we can frame it right.</p>
+          <button onClick="{{ goToScheme }}" style="margin-top:6px; align-self:flex-start; background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; letter-spacing:1.5px; text-transform:uppercase; padding:16px 32px; clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%); cursor:pointer;">Begin Registration →</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep1 }}">
+        <div style="animation:riseIn .4s ease both; display:flex; flex-direction:column; gap:26px;">
+          <div>
+            <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">Step 02</div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,4vw,34px); text-transform:uppercase; letter-spacing:1px;">Which Entry Are You Boarding For?</div>
+            <p style="color:var(--text-muted); font-size:14px; margin:8px 0 0;">SSB content is identical either way — this only tunes PIQ and interview framing.</p>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px;">
+            <sc-for list="{{ schemeOptions }}" as="opt" hint-placeholder-count="8">
+              <button onClick="{{ opt.onClick }}" style="{{ opt.style }}">{{ opt.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex; gap:14px; margin-top:6px;">
+            <button onClick="{{ goToWelcome }}" style="background:transparent; color:var(--text-muted); border:1px solid var(--border); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:14px; letter-spacing:1px; text-transform:uppercase; padding:14px 26px; cursor:pointer;">← Back</button>
+            <button onClick="{{ goToAttempts }}" style="background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; padding:14px 30px; clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%); cursor:pointer;">Continue →</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep2 }}">
+        <div style="animation:riseIn .4s ease both; display:flex; flex-direction:column; gap:26px;">
+          <div>
+            <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">Step 03</div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,4vw,34px); text-transform:uppercase; letter-spacing:1px;">How Many SSB Attempts So Far?</div>
+            <p style="color:var(--text-muted); font-size:14px; margin:8px 0 0;">Repeat candidates get the same modules — no rehearsed answers here, just more reps.</p>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <sc-for list="{{ attemptOptions }}" as="opt" hint-placeholder-count="4">
+              <button onClick="{{ opt.onClick }}" style="{{ opt.style }}">{{ opt.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex; gap:14px; margin-top:6px;">
+            <button onClick="{{ goToScheme }}" style="background:transparent; color:var(--text-muted); border:1px solid var(--border); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:14px; letter-spacing:1px; text-transform:uppercase; padding:14px 26px; cursor:pointer;">← Back</button>
+            <button onClick="{{ goToModules }}" style="background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; padding:14px 30px; clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%); cursor:pointer;">Enter Training →</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep3 }}">
+        <div style="animation:riseIn .4s ease both; display:flex; flex-direction:column; gap:26px;">
+          <div>
+            <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">Registered</div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(26px,4vw,34px); text-transform:uppercase; letter-spacing:1px;">Training Modules</div>
+            <p style="color:var(--text-muted); font-size:14px; margin:8px 0 0;">{{ summaryLine }}</p>
+          </div>
+
+          <div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; color:var(--khaki); margin-bottom:12px;">Psychology</div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px;">
+              <sc-for list="{{ psychModules }}" as="m" hint-placeholder-count="4">
+                <div style="background:var(--bg-panel); border:1px solid var(--border); border-left:3px solid var(--amber); padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
+                  <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:17px; text-transform:uppercase;">{{ m.name }}</div>
+                  <div style="font-size:12px; color:var(--text-muted); line-height:1.5;">{{ m.desc }}</div>
+                  <button onClick="{{ m.onClick }}" style="margin-top:6px; align-self:flex-start; background:transparent; color:var(--amber); border:1px solid var(--amber); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:12px; letter-spacing:1px; text-transform:uppercase; padding:9px 16px; cursor:pointer;">Start →</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; color:var(--khaki); margin-bottom:12px;">Group Testing</div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px;">
+              <sc-for list="{{ gtoModules }}" as="m" hint-placeholder-count="3">
+                <div style="background:var(--bg-panel); border:1px solid var(--border); border-left:3px solid var(--steel); padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
+                  <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:17px; text-transform:uppercase;">{{ m.name }}</div>
+                  <div style="font-size:12px; color:var(--text-muted); line-height:1.5;">{{ m.desc }}</div>
+                  <button onClick="{{ m.onClick }}" style="margin-top:6px; align-self:flex-start; background:transparent; color:var(--khaki); border:1px solid var(--steel); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:12px; letter-spacing:1px; text-transform:uppercase; padding:9px 16px; cursor:pointer;">Start →</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; color:var(--khaki); margin-bottom:12px;">Interview &amp; Self-Assessment</div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px;">
+              <sc-for list="{{ interviewModules }}" as="m" hint-placeholder-count="2">
+                <div style="background:var(--bg-panel); border:1px solid var(--border); border-left:3px solid var(--eligible); padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
+                  <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:17px; text-transform:uppercase;">{{ m.name }}</div>
+                  <div style="font-size:12px; color:var(--text-muted); line-height:1.5;">{{ m.desc }}</div>
+                  <button onClick="{{ m.onClick }}" style="margin-top:6px; align-self:flex-start; background:transparent; color:var(--eligible); border:1px solid var(--eligible); font-family:'Rajdhani',sans-serif; font-weight:600; font-size:12px; letter-spacing:1px; text-transform:uppercase; padding:9px 16px; cursor:pointer;">Start →</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; color:var(--khaki); margin-bottom:12px;">Free Bonus</div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px;">
+              <sc-for list="{{ bonusModules }}" as="m" hint-placeholder-count="2">
+                <div style="background:var(--bg-panel); border:1px solid var(--eligible); padding:18px 20px; display:flex; flex-direction:column; gap:8px;">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                    <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:17px; text-transform:uppercase;">{{ m.name }}</div>
+                    <div style="font-size:9px; letter-spacing:1px; color:var(--eligible); border:1px solid var(--eligible); padding:2px 7px; text-transform:uppercase; white-space:nowrap;">Free</div>
+                  </div>
+                  <div style="font-size:12px; color:var(--text-muted); line-height:1.5;">{{ m.desc }}</div>
+                  <button onClick="{{ m.onClick }}" style="margin-top:6px; align-self:flex-start; background:var(--eligible); color:#0f130a; border:none; font-family:'Rajdhani',sans-serif; font-weight:600; font-size:12px; letter-spacing:1px; text-transform:uppercase; padding:9px 16px; cursor:pointer;">Start →</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--bg-panel); border:1px solid var(--border); border-left:3px solid var(--amber); padding:18px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+            <div>
+              <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:.5px;">Want Direct Feedback?</div>
+              <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Book time with a retired IO, GTO, Psychologist or Board President.</div>
+            </div>
+            <a href="Expert Consultation.dc.html" style="background:var(--amber); color:#1b1500; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; text-transform:uppercase; padding:11px 20px; text-decoration:none; white-space:nowrap;">Book Expert Consultation →</a>
+          </div>
+
+          <div style="font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:14px; line-height:1.6;">Every module ends in self-review against a rubric. No numeric scoring on psychology or interview content — process metrics and neutral pattern-surfacing only.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep4 }}">
+        <div style="animation:riseIn .4s ease both; max-width:460px; display:flex; flex-direction:column; gap:20px; padding-top:clamp(16px,4vh,40px);">
+          <div>
+            <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">{{ selectedModuleName }}</div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(24px,3.6vw,30px); text-transform:uppercase; letter-spacing:1px;">Unlock Full SSB Training</div>
+            <p style="color:var(--text-muted); font-size:14px; margin:8px 0 0; line-height:1.5;">{{ selectedModuleDesc }}</p>
+          </div>
+          <div style="background:var(--bg-panel); border:1px solid var(--amber); padding:22px; display:flex; flex-direction:column; gap:8px;">
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:17px; text-transform:uppercase;">SSB Prep — {{ scheme }}</div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:28px; color:var(--khaki);">₹899<span style="font-size:13px; color:var(--text-muted); font-weight:400;"> / month</span></div>
+            <div style="font-size:12px; color:var(--text-muted);">Full access to Psychology, Group Testing and Interview modules.</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-start;">
+            <button style="background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; letter-spacing:1.5px; text-transform:uppercase; padding:16px 30px; clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%); cursor:pointer;">Start 7-Day Free Trial →</button>
+            <div style="font-size:12px; color:var(--text-muted);">No payment required today. Cancel anytime before day 7.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep6 }}">
+        <div style="animation:riseIn .4s ease both; max-width:560px; display:flex; flex-direction:column; gap:18px; padding-top:clamp(10px,3vh,30px);">
+          <div>
+            <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">Free Bonus</div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(24px,3.6vw,30px); text-transform:uppercase; letter-spacing:1px;">AI Assistant</div>
+            <p style="color:var(--text-muted); font-size:13px; margin:6px 0 0;">Explains OLQs, rubrics and response structure. Never scores your answers.</p>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:10px; min-height:120px;">
+            <sc-for list="{{ aiMessages }}" as="msg" hint-placeholder-count="0">
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <div style="align-self:flex-end; background:var(--bg-panel-2); border:1px solid var(--border); padding:10px 14px; font-size:13px; max-width:85%;">{{ msg.q }}</div>
+                <div style="align-self:flex-start; background:var(--bg-panel); border:1px solid var(--border); border-left:3px solid var(--amber); padding:10px 14px; font-size:13px; color:var(--khaki); max-width:85%;">{{ msg.a }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ aiLimitReached }}">
+            <div style="background:var(--bg-panel); border:1px solid var(--amber); padding:16px 18px; display:flex; flex-direction:column; gap:10px;">
+              <div style="font-size:13px; color:var(--khaki);">You've used your 3 free questions in trial mode. Subscribe for unlimited AI Assistant access.</div>
+              <button onClick="{{ openAiPaywall }}" style="align-self:flex-start; background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; text-transform:uppercase; padding:11px 20px; cursor:pointer;">Unlock Unlimited →</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ !aiLimitReached }}">
+            <div style="display:flex; gap:10px;">
+              <input value="{{ aiInput }}" onChange="{{ onAiInputChange }}" placeholder="Ask about an OLQ, rubric or response structure…" style="flex:1; background:var(--bg-panel-2); border:1px solid var(--border); color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:13px; padding:12px 14px;">
+              <button onClick="{{ sendAiQuestion }}" style="background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; letter-spacing:1px; text-transform:uppercase; padding:12px 20px; cursor:pointer;">Ask</button>
+            </div>
+            <div style="font-size:11px; color:var(--text-muted);">{{ aiCounterLabel }}</div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep5 }}">
+        <div style="animation:riseIn .4s ease both; max-width:460px; display:flex; flex-direction:column; gap:18px; padding-top:clamp(16px,4vh,40px);">
+          <div style="width:44px; height:44px; background:var(--eligible); display:flex; align-items:center; justify-content:center; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:20px; color:#0f130a;">✓</div>
+          <div>
+            <div style="font-size:12px; letter-spacing:2px; color:var(--amber); text-transform:uppercase; font-weight:600;">{{ selectedModuleName }}</div>
+            <div style="font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(24px,3.6vw,30px); text-transform:uppercase; letter-spacing:1px;">Module Unlocked</div>
+            <p style="color:var(--text-muted); font-size:14px; margin:8px 0 0; line-height:1.5;">You're already subscribed — {{ selectedModuleDesc }}</p>
+          </div>
+          <button style="align-self:flex-start; background:var(--amber); color:#1b1500; border:none; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; letter-spacing:1.5px; text-transform:uppercase; padding:16px 30px; clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%); cursor:pointer;">Enter {{ selectedModuleName }} →</button>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;isSubscribed&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Membership (demo)&quot;}}">
+const SCHEMES = ['NDA/NA', 'CDS — IMA', 'CDS — INA', 'CDS — AFA', 'CDS — OTA', 'AFCAT', 'TES', 'TGC', 'SSC', 'NCC Special Entry', 'UES', 'JAG', 'ACC', 'TA'];
+const ATTEMPTS = ['First Attempt', '2nd Attempt', '3rd Attempt', '4th Attempt or more'];
+
+class Component extends DCLogic {
+  state = { step: 0, scheme: 'NDA/NA', attempts: 'First Attempt', selectedModule: null, aiMessages: [], aiInput: '', aiQuestionsUsed: 0 };
+
+  goToWelcome = () => this.setState({ step: 0 });
+  goToScheme = () => this.setState({ step: 1 });
+  goToAttempts = () => this.setState({ step: 2 });
+  goToModules = () => this.setState({ step: 3 });
+  setScheme = (v) => this.setState({ scheme: v });
+  setAttempts = (v) => this.setState({ attempts: v });
+  openPaywall = (m) => {
+    const isSubscribed = this.props.isSubscribed ?? false;
+    this.setState({ step: isSubscribed ? 5 : 4, selectedModule: m });
+  };
+  openFree = (m) => this.setState({ step: 5, selectedModule: m });
+  openAiAssistant = () => this.setState({ step: 6 });
+  openAiPaywall = () => this.setState({ step: 4, selectedModule: { name: 'AI Assistant', desc: 'Unlimited AI Assistant access, plus every SSB training module.' } });
+  onAiInputChange = (e) => this.setState({ aiInput: e.target.value });
+  sendAiQuestion = () => {
+    const q = this.state.aiInput.trim();
+    if (!q) return;
+    const a = 'Good question. Think in terms of the situation, your action and the outcome — that structure reads clearly to an assessor. This explains the approach; the actual response is always yours to write and self-review.';
+    this.setState(s => ({
+      aiMessages: [...s.aiMessages, { q, a }],
+      aiInput: '',
+      aiQuestionsUsed: s.aiQuestionsUsed + 1
+    }));
+  };
+
+  pillStyle(active) {
+    const base = "font-family:'Rajdhani',sans-serif; font-weight:600; font-size:13px; letter-spacing:.5px; padding:12px 16px; cursor:pointer; border:1px solid ";
+    return active ? base + "var(--amber); background:var(--amber); color:#1b1500;" : base + "var(--border); background:var(--bg-panel); color:var(--text);";
+  }
+
+  renderVals() {
+    const s = this.state;
+    const stepLabels = ['Register', 'Entry Type', 'Attempts', 'Modules'];
+    const checkpoints = stepLabels.map((label, i) => ({
+      num: '0' + (i + 1), label,
+      color: i < s.step ? 'var(--eligible)' : (i === s.step ? 'var(--amber)' : 'var(--steel)'),
+      showLine: i < stepLabels.length - 1
+    }));
+
+    const schemeOptions = SCHEMES.map(name => ({ label: name, onClick: () => this.setScheme(name), style: this.pillStyle(s.scheme === name) }));
+    const attemptOptions = ATTEMPTS.map(name => ({ label: name, onClick: () => this.setAttempts(name), style: this.pillStyle(s.attempts === name) }));
+
+    const withStart = (list) => list.map(m => ({ ...m, onClick: () => this.openPaywall(m) }));
+    const sel = s.selectedModule;
+
+    return {
+      isStep0: s.step === 0, isStep1: s.step === 1, isStep2: s.step === 2, isStep3: s.step === 3, isStep4: s.step === 4, isStep5: s.step === 5,
+      isHeaderStepper: s.step < 4,
+      checkpoints,
+      goToWelcome: this.goToWelcome, goToScheme: this.goToScheme, goToAttempts: this.goToAttempts, goToModules: this.goToModules,
+      schemeOptions, attemptOptions,
+      scheme: s.scheme,
+      summaryLine: `Entry: ${s.scheme} · ${s.attempts} — PIQ and interview modules are framed for this.`,
+      selectedModuleName: sel ? sel.name : '',
+      selectedModuleDesc: sel ? sel.desc : '',
+      psychModules: withStart([
+        { name: 'TAT', desc: '30s image view, 4 min write per image. Self-review after the set.' },
+        { name: 'WAT', desc: '15s per word, no backspace or edit during the window — enforced.' },
+        { name: 'SRT', desc: 'Timed situation reactions, reviewed against the OLQ rubric.' },
+        { name: 'Self Description', desc: 'Timed write-up across five perspectives, self-reviewed.' }
+      ]),
+      gtoModules: withStart([
+        { name: 'PPDT', desc: '30s picture view, then narration and discussion — text + checklist, no recording.' },
+        { name: 'Lecturette', desc: 'Timed countdown on a random topic — text notes + self-review checklist.' },
+        { name: 'Group Tasks', desc: 'GD and outdoor-task scenarios as text-based planning exercises.' }
+      ]),
+      interviewModules: withStart([
+        { name: 'PIQ & Interview Prep', desc: `Question bank tuned to ${s.scheme}'s PIQ profile. Self-review, no AI scoring.` },
+        { name: 'OLQ Self-Assessment', desc: 'Reflect across all 15 Officer-Like Qualities — no verdicts, just your own read.' }
+      ]),
+      bonusModules: [
+        { name: 'English & Confidence', desc: 'Free study material — grammar, vocabulary and spoken-confidence drills for interview day.', onClick: () => this.openFree({ name: 'English & Confidence', desc: 'Free study material — grammar, vocabulary and spoken-confidence drills for interview day.' }) },
+        { name: 'AI Assistant', desc: 'Ask about OLQs, rubrics or how to structure a response. Explains and guides — never scores your psychology or interview answers.', onClick: this.openAiAssistant }
+      ],
+      isStep6: s.step === 6,
+      aiMessages: s.aiMessages,
+      aiInput: s.aiInput,
+      onAiInputChange: this.onAiInputChange,
+      sendAiQuestion: this.sendAiQuestion,
+      openAiPaywall: this.openAiPaywall,
+      aiLimitReached: !(this.props.isSubscribed ?? false) && s.aiQuestionsUsed >= 3,
+      aiCounterLabel: (this.props.isSubscribed ?? false) ? 'Unlimited questions — you\'re subscribed.' : `${s.aiQuestionsUsed}/3 free questions used in trial mode.`
+    };
+  }
+}
+
+</script>
+</body>
+</html>
