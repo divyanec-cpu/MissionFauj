@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useAppState } from '../../../context/AppStateContext';
 import { checkDob, isValidIndianMobile, isValidName } from '../../../lib/validation';
 import { verifyWidgetToken } from '../../../lib/otpApi';
@@ -76,6 +76,8 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
   const [sendError, setSendError] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
+  const verifyingRef = useRef(false);
+  const sendingRef = useRef(false);
 
   const dobCheck = checkDob(dob);
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -91,10 +93,13 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
     isValidName(candidateName) && /^\S+@\S+\.\S+$/.test(candidateEmail) && isValidIndianMobile(candidatePhone);
 
   const requestOtp = async (role: PendingRole, phone: string) => {
+    if (sendingRef.current) return;
+    sendingRef.current = true;
     const target = `+91${phone}`;
     setSendingOtp(true);
     setSendError('');
     const result = await sendOtpWidget(`91${phone}`);
+    sendingRef.current = false;
     setSendingOtp(false);
     if (!result.ok) {
       setSendError(result.error ?? 'Could not send the verification code.');
@@ -110,7 +115,7 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
 
   const submitCandidate = () => {
     setCandidateTouched(true);
-    if (!candidateValid || sendingOtp) return;
+    if (!candidateValid || sendingRef.current) return;
     requestOtp('candidate', candidatePhone);
   };
 
@@ -122,30 +127,36 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
 
   const submitParent = () => {
     setParentTouched(true);
-    if (!parentValid || sendingOtp) return;
+    if (!parentValid || sendingRef.current) return;
     requestOtp('parent', parentPhone);
   };
 
   const handleResendOtp = async () => {
+    if (sendingRef.current) return;
+    sendingRef.current = true;
     setSendingOtp(true);
     setResendMessage('');
     setOtpError('');
     const result = await retryOtpWidget('text');
+    sendingRef.current = false;
     setSendingOtp(false);
     setResendMessage(result.ok ? 'Code resent.' : (result.error ?? 'Could not resend the code.'));
   };
 
   const handleVerifyOtp = async () => {
-    if (verifying) return;
+    if (verifyingRef.current) return;
+    verifyingRef.current = true;
     setVerifying(true);
     setOtpError('');
     const widgetResult = await verifyOtpWidget(otpInput.trim());
     if (!widgetResult.ok || !widgetResult.data) {
+      verifyingRef.current = false;
       setVerifying(false);
       setOtpError(widgetResult.error ?? 'Incorrect or expired code.');
       return;
     }
     const result = await verifyWidgetToken(widgetResult.data);
+    verifyingRef.current = false;
     setVerifying(false);
     if (!result.ok) {
       setOtpError(result.error ?? 'Could not confirm verification. Try again.');
