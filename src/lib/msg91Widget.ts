@@ -35,6 +35,18 @@ export interface WidgetResult<T = undefined> {
   ok: boolean;
   error?: string;
   data?: T;
+  /** JSON dump of exactly what MSG91 sent back, plus our own call count for this
+   * method — kept while we're chasing the "OTP already verified" report, so a
+   * failure can be diagnosed from an on-screen message alone, no devtools needed. */
+  debug?: string;
+}
+
+function safeStringify(value: unknown): string {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
 }
 
 function extractMessage(error: unknown): string {
@@ -45,6 +57,8 @@ function extractMessage(error: unknown): string {
 }
 
 let initPromise: Promise<string> | null = null;
+let sendCallCount = 0;
+let verifyCallCount = 0;
 
 /**
  * Calling initSendOTP doesn't make window.sendOtp/retryOtp/verifyOtp available
@@ -96,12 +110,19 @@ function ensureInit(): Promise<string> {
 export async function sendOtpWidget(identifier: string): Promise<WidgetResult> {
   const initError = await ensureInit();
   if (initError) return { ok: false, error: initError };
+  sendCallCount += 1;
+  const callNumber = sendCallCount;
   return new Promise((resolve) => {
     if (typeof window.sendOtp !== 'function') return resolve({ ok: false, error: 'OTP widget is unavailable.' });
     window.sendOtp(
       identifier,
-      () => resolve({ ok: true }),
-      (error) => resolve({ ok: false, error: extractMessage(error) }),
+      (data) => resolve({ ok: true, debug: `send call #${callNumber}: ${safeStringify(data)}` }),
+      (error) =>
+        resolve({
+          ok: false,
+          error: extractMessage(error),
+          debug: `send call #${callNumber}: ${safeStringify(error)}`,
+        }),
     );
   });
 }
@@ -122,12 +143,24 @@ export async function retryOtpWidget(channel?: 'text' | 'voice'): Promise<Widget
 export async function verifyOtpWidget(otp: string): Promise<WidgetResult<string>> {
   const initError = await ensureInit();
   if (initError) return { ok: false, error: initError };
+  verifyCallCount += 1;
+  const callNumber = verifyCallCount;
   return new Promise((resolve) => {
     if (typeof window.verifyOtp !== 'function') return resolve({ ok: false, error: 'OTP widget is unavailable.' });
     window.verifyOtp(
       otp,
-      (data) => resolve({ ok: true, data: data?.message }),
-      (error) => resolve({ ok: false, error: extractMessage(error) }),
+      (data) =>
+        resolve({
+          ok: true,
+          data: data?.message,
+          debug: `verify call #${callNumber}: ${safeStringify(data)}`,
+        }),
+      (error) =>
+        resolve({
+          ok: false,
+          error: extractMessage(error),
+          debug: `verify call #${callNumber}: ${safeStringify(error)}`,
+        }),
     );
   });
 }

@@ -76,6 +76,7 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
   const [sendError, setSendError] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
+  const [otpDebug, setOtpDebug] = useState('');
   const verifyingRef = useRef(false);
   const sendingRef = useRef(false);
 
@@ -101,6 +102,7 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
     const result = await sendOtpWidget(`91${phone}`);
     sendingRef.current = false;
     setSendingOtp(false);
+    if (result.debug) setOtpDebug(result.debug);
     if (!result.ok) {
       setSendError(result.error ?? 'Could not send the verification code.');
       return;
@@ -148,7 +150,9 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
     verifyingRef.current = true;
     setVerifying(true);
     setOtpError('');
+    setOtpDebug('');
     const widgetResult = await verifyOtpWidget(otpInput.trim());
+    if (widgetResult.debug) setOtpDebug(widgetResult.debug);
     if (!widgetResult.ok || !widgetResult.data) {
       verifyingRef.current = false;
       setVerifying(false);
@@ -361,6 +365,11 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
               {sendingOtp ? 'Resending…' : 'Resend Code'}
             </button>
           </div>
+          {otpDebug && (
+            <div className="bg-bg-panel-2 border border-border break-all px-3.5 py-3 font-mono text-[11px] text-muted">
+              {otpDebug}
+            </div>
+          )}
         </>
       )}
 
