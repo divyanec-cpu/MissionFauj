@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useAppState } from '../../../context/AppStateContext';
 import { checkDob, isValidIndianMobile, isValidName } from '../../../lib/validation';
-import { sendOtp, verifyOtp, resendOtp } from '../../../lib/otpApi';
+import { verifyWidgetToken } from '../../../lib/otpApi';
+import { sendOtpWidget, retryOtpWidget, verifyOtpWidget } from '../../../lib/msg91Widget';
 
 type Phase = 'dob' | 'candidate-form' | 'parent-form' | 'otp' | 'invite-sent' | 'welcome';
 type PendingRole = 'candidate' | 'parent' | null;
@@ -93,7 +94,7 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
     const target = `+91${phone}`;
     setSendingOtp(true);
     setSendError('');
-    const result = await sendOtp(target);
+    const result = await sendOtpWidget(`91${phone}`);
     setSendingOtp(false);
     if (!result.ok) {
       setSendError(result.error ?? 'Could not send the verification code.');
@@ -129,7 +130,7 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
     setSendingOtp(true);
     setResendMessage('');
     setOtpError('');
-    const result = await resendOtp(otpTarget);
+    const result = await retryOtpWidget('text');
     setSendingOtp(false);
     setResendMessage(result.ok ? 'Code resent.' : (result.error ?? 'Could not resend the code.'));
   };
@@ -138,10 +139,16 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
     if (verifying) return;
     setVerifying(true);
     setOtpError('');
-    const result = await verifyOtp(otpTarget, otpInput.trim());
+    const widgetResult = await verifyOtpWidget(otpInput.trim());
+    if (!widgetResult.ok || !widgetResult.data) {
+      setVerifying(false);
+      setOtpError(widgetResult.error ?? 'Incorrect or expired code.');
+      return;
+    }
+    const result = await verifyWidgetToken(widgetResult.data);
     setVerifying(false);
     if (!result.ok) {
-      setOtpError(result.error ?? 'Incorrect or expired code.');
+      setOtpError(result.error ?? 'Could not confirm verification. Try again.');
       return;
     }
     if (pendingRole === 'candidate') {
