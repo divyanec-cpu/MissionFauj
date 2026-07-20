@@ -1,5 +1,6 @@
 const WIDGET_ID = import.meta.env.VITE_MSG91_WIDGET_ID || '';
 const TOKEN_AUTH = import.meta.env.VITE_MSG91_TOKEN_AUTH || '';
+const INIT_TIMEOUT_MS = 8000;
 
 interface Msg91WidgetInitConfig {
   widgetId: string;
@@ -36,29 +37,6 @@ export interface WidgetResult<T = undefined> {
   data?: T;
 }
 
-let initialized = false;
-let initError = '';
-
-function ensureInit() {
-  if (initialized || initError) return;
-  if (!WIDGET_ID || !TOKEN_AUTH) {
-    initError = 'OTP widget is not configured yet (missing Widget ID / Token Auth).';
-    return;
-  }
-  if (typeof window.initSendOTP !== 'function') {
-    initError = 'OTP widget script has not loaded. Check your connection and try again.';
-    return;
-  }
-  window.initSendOTP({
-    widgetId: WIDGET_ID,
-    tokenAuth: TOKEN_AUTH,
-    exposeMethods: true,
-    success: () => {},
-    failure: () => {},
-  });
-  initialized = true;
-}
-
 function extractMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'message' in error) {
     return String((error as { message?: unknown }).message ?? 'Something went wrong. Try again.');
@@ -66,10 +44,59 @@ function extractMessage(error: unknown): string {
   return 'Something went wrong. Try again.';
 }
 
-export function sendOtpWidget(identifier: string): Promise<WidgetResult> {
-  ensureInit();
+let initPromise: Promise<string> | null = null;
+
+/**
+ * Calling initSendOTP doesn't make window.sendOtp/retryOtp/verifyOtp available
+ * synchronously — the widget sets those up asynchronously. Wait for either its own
+ * success/failure callback or (as a fallback, since that callback isn't always fired
+ * reliably by every widget version) for window.sendOtp to actually appear.
+ * Resolves with an error string, or '' once ready.
+ */
+function ensureInit(): Promise<string> {
+  if (initPromise) return initPromise;
+
+  initPromise = new Promise((resolve) => {
+    if (!WIDGET_ID || !TOKEN_AUTH) {
+      resolve('OTP widget is not configured yet (missing Widget ID / Token Auth).');
+      return;
+    }
+    if (typeof window.initSendOTP !== 'function') {
+      resolve('OTP widget script has not loaded. Check your connection and try again.');
+      return;
+    }
+
+    let settled = false;
+    const settle = (error: string) => {
+      if (settled) return;
+      settled = true;
+      resolve(error);
+    };
+
+    window.initSendOTP({
+      widgetId: WIDGET_ID,
+      tokenAuth: TOKEN_AUTH,
+      exposeMethods: true,
+      success: () => settle(''),
+      failure: (error) => settle(extractMessage(error)),
+    });
+
+    const start = Date.now();
+    const poll = () => {
+      if (typeof window.sendOtp === 'function') return settle('');
+      if (Date.now() - start > INIT_TIMEOUT_MS) return settle('OTP widget failed to initialize. Try again.');
+      setTimeout(poll, 150);
+    };
+    setTimeout(poll, 150);
+  });
+
+  return initPromise;
+}
+
+export async function sendOtpWidget(identifier: string): Promise<WidgetResult> {
+  const initError = await ensureInit();
+  if (initError) return { ok: false, error: initError };
   return new Promise((resolve) => {
-    if (initError) return resolve({ ok: false, error: initError });
     if (typeof window.sendOtp !== 'function') return resolve({ ok: false, error: 'OTP widget is unavailable.' });
     window.sendOtp(
       identifier,
@@ -79,7 +106,9 @@ export function sendOtpWidget(identifier: string): Promise<WidgetResult> {
   });
 }
 
-export function retryOtpWidget(channel?: 'text' | 'voice'): Promise<WidgetResult> {
+export async function retryOtpWidget(channel?: 'text' | 'voice'): Promise<WidgetResult> {
+  const initError = await ensureInit();
+  if (initError) return { ok: false, error: initError };
   return new Promise((resolve) => {
     if (typeof window.retryOtp !== 'function') return resolve({ ok: false, error: 'OTP widget is unavailable.' });
     window.retryOtp(
@@ -90,7 +119,9 @@ export function retryOtpWidget(channel?: 'text' | 'voice'): Promise<WidgetResult
   });
 }
 
-export function verifyOtpWidget(otp: string): Promise<WidgetResult<string>> {
+export async function verifyOtpWidget(otp: string): Promise<WidgetResult<string>> {
+  const initError = await ensureInit();
+  if (initError) return { ok: false, error: initError };
   return new Promise((resolve) => {
     if (typeof window.verifyOtp !== 'function') return resolve({ ok: false, error: 'OTP widget is unavailable.' });
     window.verifyOtp(
