@@ -48,6 +48,7 @@ async function msg91SendOtp(tenDigitPhone) {
     body: JSON.stringify({ widgetId, tokenAuth, identifier: mobile }),
   });
   const data = await res.json().catch(() => ({}));
+  console.log('[msg91] send-otp', { mobile, status: res.status, response: data });
   if (data?.type !== 'success') throw new Msg91RequestError(extractError(data));
   // On success, MSG91's Widget API puts the reqId in the `message` field (not a
   // `reqId` field, despite what some doc snippets suggest).
@@ -64,6 +65,7 @@ async function msg91ResendOtp(reqId, retryChannel = 'text') {
     body: JSON.stringify({ widgetId, tokenAuth, reqId, retryChannel }),
   });
   const data = await res.json().catch(() => ({}));
+  console.log('[msg91] retry-otp', { reqId, status: res.status, response: data });
   if (data?.type !== 'success') throw new Msg91RequestError(extractError(data));
 }
 
@@ -75,6 +77,7 @@ async function msg91VerifyOtp(reqId, otp) {
     body: JSON.stringify({ widgetId, tokenAuth, reqId, otp }),
   });
   const data = await res.json().catch(() => ({}));
+  console.log('[msg91] verify-otp', { reqId, status: res.status, response: data });
   return data?.type === 'success';
 }
 
