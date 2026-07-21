@@ -1,8 +1,7 @@
 import { useRef, useState } from 'react';
 import { useAppState } from '../../../context/AppStateContext';
 import { checkDob, isValidIndianMobile, isValidName } from '../../../lib/validation';
-import { verifyWidgetToken } from '../../../lib/otpApi';
-import { sendOtpWidget, retryOtpWidget, verifyOtpWidget } from '../../../lib/msg91Widget';
+import { sendOtp, verifyOtp, resendOtp } from '../../../lib/otpApi';
 
 type Phase = 'dob' | 'candidate-form' | 'parent-form' | 'otp' | 'invite-sent' | 'welcome';
 type PendingRole = 'candidate' | 'parent' | null;
@@ -70,13 +69,13 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
 
   const [pendingRole, setPendingRole] = useState<PendingRole>(null);
   const [otpTarget, setOtpTarget] = useState('');
+  const [reqId, setReqId] = useState('');
   const [otpInput, setOtpInput] = useState('');
   const [otpError, setOtpError] = useState('');
   const [sendingOtp, setSendingOtp] = useState(false);
   const [sendError, setSendError] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
-  const [otpDebug, setOtpDebug] = useState('');
   const verifyingRef = useRef(false);
   const sendingRef = useRef(false);
 
@@ -96,19 +95,18 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
   const requestOtp = async (role: PendingRole, phone: string) => {
     if (sendingRef.current) return;
     sendingRef.current = true;
-    const target = `+91${phone}`;
     setSendingOtp(true);
     setSendError('');
-    const result = await sendOtpWidget(`91${phone}`);
+    const result = await sendOtp(phone);
     sendingRef.current = false;
     setSendingOtp(false);
-    if (result.debug) setOtpDebug(result.debug);
-    if (!result.ok) {
+    if (!result.ok || !result.reqId) {
       setSendError(result.error ?? 'Could not send the verification code.');
       return;
     }
     setPendingRole(role);
-    setOtpTarget(target);
+    setOtpTarget(`+91${phone}`);
+    setReqId(result.reqId);
     setOtpInput('');
     setOtpError('');
     setResendMessage('');
@@ -139,7 +137,7 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
     setSendingOtp(true);
     setResendMessage('');
     setOtpError('');
-    const result = await retryOtpWidget('text');
+    const result = await resendOtp(reqId, 'text');
     sendingRef.current = false;
     setSendingOtp(false);
     setResendMessage(result.ok ? 'Code resent.' : (result.error ?? 'Could not resend the code.'));
@@ -150,20 +148,11 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
     verifyingRef.current = true;
     setVerifying(true);
     setOtpError('');
-    setOtpDebug('');
-    const widgetResult = await verifyOtpWidget(otpInput.trim());
-    if (widgetResult.debug) setOtpDebug(widgetResult.debug);
-    if (!widgetResult.ok || !widgetResult.data) {
-      verifyingRef.current = false;
-      setVerifying(false);
-      setOtpError(widgetResult.error ?? 'Incorrect or expired code.');
-      return;
-    }
-    const result = await verifyWidgetToken(widgetResult.data);
+    const result = await verifyOtp(reqId, otpInput.trim());
     verifyingRef.current = false;
     setVerifying(false);
     if (!result.ok) {
-      setOtpError(result.error ?? 'Could not confirm verification. Try again.');
+      setOtpError(result.error ?? 'Incorrect or expired code.');
       return;
     }
     if (pendingRole === 'candidate') {
@@ -365,11 +354,6 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
               {sendingOtp ? 'Resending…' : 'Resend Code'}
             </button>
           </div>
-          {otpDebug && (
-            <div className="bg-bg-panel-2 border border-border break-all px-3.5 py-3 font-mono text-[11px] text-muted">
-              {otpDebug}
-            </div>
-          )}
         </>
       )}
 
