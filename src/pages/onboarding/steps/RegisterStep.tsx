@@ -1,10 +1,8 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useAppState } from '../../../context/AppStateContext';
 import { checkDob, isValidIndianMobile, isValidName } from '../../../lib/validation';
-import { sendOtp, verifyOtp, resendOtp } from '../../../lib/otpApi';
 
-type Phase = 'dob' | 'candidate-form' | 'parent-form' | 'otp' | 'invite-sent' | 'welcome';
-type PendingRole = 'candidate' | 'parent' | null;
+type Phase = 'dob' | 'candidate-form' | 'parent-form' | 'invite-sent' | 'welcome';
 
 const inputClass = 'bg-bg-panel-2 border border-border w-full px-3.5 py-3 text-sm text-ink';
 const labelClass = 'mb-1.5 block text-[11px] tracking-wide text-muted uppercase';
@@ -67,18 +65,6 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
   const [childName, setChildName] = useState('');
   const [parentTouched, setParentTouched] = useState(false);
 
-  const [pendingRole, setPendingRole] = useState<PendingRole>(null);
-  const [otpTarget, setOtpTarget] = useState('');
-  const [reqId, setReqId] = useState('');
-  const [otpInput, setOtpInput] = useState('');
-  const [otpError, setOtpError] = useState('');
-  const [sendingOtp, setSendingOtp] = useState(false);
-  const [sendError, setSendError] = useState('');
-  const [verifying, setVerifying] = useState(false);
-  const [resendMessage, setResendMessage] = useState('');
-  const verifyingRef = useRef(false);
-  const sendingRef = useRef(false);
-
   const dobCheck = checkDob(dob);
   const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -92,31 +78,16 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
   const candidateValid =
     isValidName(candidateName) && /^\S+@\S+\.\S+$/.test(candidateEmail) && isValidIndianMobile(candidatePhone);
 
-  const requestOtp = async (role: PendingRole, phone: string) => {
-    if (sendingRef.current) return;
-    sendingRef.current = true;
-    setSendingOtp(true);
-    setSendError('');
-    const result = await sendOtp(phone);
-    sendingRef.current = false;
-    setSendingOtp(false);
-    if (!result.ok || !result.reqId) {
-      setSendError(result.error ?? 'Could not send the verification code.');
-      return;
-    }
-    setPendingRole(role);
-    setOtpTarget(`+91${phone}`);
-    setReqId(result.reqId);
-    setOtpInput('');
-    setOtpError('');
-    setResendMessage('');
-    setPhase('otp');
-  };
-
   const submitCandidate = () => {
     setCandidateTouched(true);
-    if (!candidateValid || sendingRef.current) return;
-    requestOtp('candidate', candidatePhone);
+    if (!candidateValid) return;
+    appState.registerCandidate({
+      name: candidateName.trim(),
+      email: candidateEmail.trim(),
+      phone: `+91${candidatePhone}`,
+    });
+    setWelcomeName(candidateName.trim());
+    setPhase('welcome');
   };
 
   const parentValid =
@@ -127,48 +98,15 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
 
   const submitParent = () => {
     setParentTouched(true);
-    if (!parentValid || sendingRef.current) return;
-    requestOtp('parent', parentPhone);
-  };
-
-  const handleResendOtp = async () => {
-    if (sendingRef.current) return;
-    sendingRef.current = true;
-    setSendingOtp(true);
-    setResendMessage('');
-    setOtpError('');
-    const result = await resendOtp(reqId, 'text');
-    sendingRef.current = false;
-    setSendingOtp(false);
-    setResendMessage(result.ok ? 'Code resent.' : (result.error ?? 'Could not resend the code.'));
-  };
-
-  const handleVerifyOtp = async () => {
-    if (verifyingRef.current) return;
-    verifyingRef.current = true;
-    setVerifying(true);
-    setOtpError('');
-    const result = await verifyOtp(reqId, otpInput.trim());
-    verifyingRef.current = false;
-    setVerifying(false);
-    if (!result.ok) {
-      setOtpError(result.error ?? 'Incorrect or expired code.');
-      return;
-    }
-    if (pendingRole === 'candidate') {
-      appState.registerCandidate({ name: candidateName.trim(), email: candidateEmail.trim(), phone: otpTarget });
-      setWelcomeName(candidateName.trim());
-      setPhase('welcome');
-    } else if (pendingRole === 'parent') {
-      const code = appState.registerParent({
-        parentName: parentName.trim(),
-        parentEmail: parentEmail.trim(),
-        parentPhone: otpTarget,
-        childName: childName.trim(),
-      });
-      setInviteCode(code);
-      setPhase('invite-sent');
-    }
+    if (!parentValid) return;
+    const code = appState.registerParent({
+      parentName: parentName.trim(),
+      parentEmail: parentEmail.trim(),
+      parentPhone: `+91${parentPhone}`,
+      childName: childName.trim(),
+    });
+    setInviteCode(code);
+    setPhase('invite-sent');
   };
 
   const acceptInviteAndContinue = () => {
@@ -237,7 +175,6 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
             )}
           </div>
           <MobileField label="Phone" value={candidatePhone} onChange={setCandidatePhone} touched={candidateTouched} />
-          {sendError && <div className={errorClass}>{sendError}</div>}
           <div className="flex gap-3.5">
             <button
               type="button"
@@ -248,11 +185,10 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
             </button>
             <button
               type="button"
-              disabled={sendingOtp}
               onClick={submitCandidate}
-              className="font-heading clip-button cursor-pointer border-none bg-amber px-7.5 py-3.5 text-sm font-bold tracking-wide text-[#1b1500] uppercase disabled:opacity-50"
+              className="font-heading clip-button cursor-pointer border-none bg-amber px-7.5 py-3.5 text-sm font-bold tracking-wide text-[#1b1500] uppercase"
             >
-              {sendingOtp ? 'Sending Code…' : 'Send OTP & Continue →'}
+              Create Account & Continue →
             </button>
           </div>
         </>
@@ -288,7 +224,6 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
             <input value={childName} onChange={(e) => setChildName(e.target.value)} className={inputClass} />
             {parentTouched && !isValidName(childName) && <div className={errorClass}>Enter the candidate's full name.</div>}
           </div>
-          {sendError && <div className={errorClass}>{sendError}</div>}
           <div className="flex gap-3.5">
             <button
               type="button"
@@ -299,59 +234,10 @@ export function RegisterStep({ onComplete }: { onComplete: (age: number) => void
             </button>
             <button
               type="button"
-              disabled={sendingOtp}
               onClick={submitParent}
-              className="font-heading clip-button cursor-pointer border-none bg-amber px-7.5 py-3.5 text-sm font-bold tracking-wide text-[#1b1500] uppercase disabled:opacity-50"
+              className="font-heading clip-button cursor-pointer border-none bg-amber px-7.5 py-3.5 text-sm font-bold tracking-wide text-[#1b1500] uppercase"
             >
-              {sendingOtp ? 'Sending Code…' : `Send OTP & Invite ${childName || 'Child'} →`}
-            </button>
-          </div>
-        </>
-      )}
-
-      {phase === 'otp' && (
-        <>
-          <div>
-            <div className="font-heading text-xl font-bold tracking-wide uppercase">Verify Your Number</div>
-            <p className="mt-2 text-sm leading-relaxed text-muted">
-              We've sent a 6-digit code via SMS to {otpTarget}. Enter it below to confirm your account.
-            </p>
-          </div>
-          <div>
-            <label className={labelClass}>Enter the 6-digit code</label>
-            <input
-              type="tel"
-              inputMode="numeric"
-              value={otpInput}
-              onChange={(e) => setOtpInput(digitsOnly(e.target.value, 6))}
-              className={inputClass}
-            />
-            {otpError && <div className={errorClass}>{otpError}</div>}
-            {resendMessage && <div className="mt-1.5 text-[12px] text-muted">{resendMessage}</div>}
-          </div>
-          <div className="flex flex-wrap items-center gap-3.5">
-            <button
-              type="button"
-              onClick={() => setPhase(pendingRole === 'parent' ? 'parent-form' : 'candidate-form')}
-              className="font-heading cursor-pointer border border-border bg-transparent px-6.5 py-3.5 text-sm font-semibold tracking-wide text-muted uppercase"
-            >
-              ← Back
-            </button>
-            <button
-              type="button"
-              disabled={verifying || otpInput.length < 4}
-              onClick={handleVerifyOtp}
-              className="font-heading clip-button cursor-pointer border-none bg-amber px-7.5 py-3.5 text-sm font-bold tracking-wide text-[#1b1500] uppercase disabled:opacity-50"
-            >
-              {verifying ? 'Verifying…' : 'Verify & Continue →'}
-            </button>
-            <button
-              type="button"
-              disabled={sendingOtp}
-              onClick={handleResendOtp}
-              className="text-[12px] tracking-wide text-amber uppercase disabled:opacity-50"
-            >
-              {sendingOtp ? 'Resending…' : 'Resend Code'}
+              Register & Invite {childName || 'Child'} →
             </button>
           </div>
         </>
