@@ -142,6 +142,18 @@ app.post('/api/otp/verify', async (req, res) => {
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
+// Temporary: reveals this server's own outbound IP, so it can be given to MSG91
+// support for allowlisting. Remove once the IP-blocking issue is fully resolved.
+app.get('/api/debug/outbound-ip', async (_req, res) => {
+  try {
+    const r = await fetch('https://api.ipify.org?format=json');
+    const data = await r.json();
+    res.json({ ok: true, ip: data.ip });
+  } catch (err) {
+    res.status(502).json({ ok: false, error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`[missionfauj-otp-server] listening on http://localhost:${PORT}`);
 });
