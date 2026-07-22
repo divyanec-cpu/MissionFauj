@@ -46,7 +46,10 @@ export async function sendOtp(tenDigitPhone: string): Promise<string> {
     });
     console.log('[msg91] send-otp', { mobile, response: res.data });
     if (res.data?.type !== 'success') {
-      throw new Msg91RequestError(extractError(res.data));
+      // TEMPORARY: surface the full raw MSG91 body (not just .message) while
+      // diagnosing a generic "Invalid request" response — revert to
+      // extractError(res.data) once the root cause is confirmed.
+      throw new Msg91RequestError(`${extractError(res.data)} | raw=${JSON.stringify(res.data)}`);
     }
     // On success, MSG91's Widget API puts the reqId in the `message` field
     // (not a `reqId` field, despite what the docs snippets suggest) - confirmed
