@@ -1,0 +1,33 @@
+# Render blueprint — https://render.com/docs/blueprint-spec
+# Deploys the auth backend only (server/). This repo's frontend is a static
+# SPA built separately (Capacitor/Android + your own static hosting), not
+# part of this blueprint.
+#
+# DATABASE_URL is deliberately `sync: false` rather than a `databases:` block
+# with `fromDatabase` auto-wiring: this is the first time MissionFauj needs a
+# database, so provisioning it is a deliberate one-time action for you to take
+# in the Render dashboard (New > PostgreSQL), not something a blueprint push
+# should silently create. Paste the resulting connection string in manually,
+# same as the MSG91 keys below.
+services:
+  - type: web
+    name: missionfauj-otp-server
+    runtime: node
+    rootDir: server
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    # Migrations are NOT run automatically on deploy/restart — run
+    # `npx prisma migrate deploy` as a separate, deliberate step (e.g. via
+    # Render's Shell) after reviewing the migration, same discipline as any
+    # change touching a real database.
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MSG91_WIDGET_ID
+        sync: false
+      - key: MSG91_TOKEN_AUTH
+        sync: false

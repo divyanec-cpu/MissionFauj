@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// One row per in-flight OTP challenge, keyed by the phone being verified.
+// `purpose` distinguishes the candidate's own number from a guardian's —
+// each is verified independently, since the guardian is a separate real
+// person proving their own identity, not a field the candidate fills in.
+model OtpSession {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  reqId     String
+  purpose   String // 'candidate' | 'guardian'
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// The durable, legally-relevant record: who consented, to what wording,
+// and when — never just a client-side checkbox. A minor's ConsentRecord
+// always carries the guardian's own verified phone; the API layer (not
+// just the UI) refuses to write a 'self' consent for a phone the server
+// itself computed as under 18 from a verified date of birth.
+model ConsentRecord {
+  id             String   @id @default(cuid())
+  candidatePhone String
+  role           String // 'self' | 'guardian'
+  consentVersion String
+  guardianName   String?
+  guardianPhone  String?
+  acceptedAt     DateTime @default(now())
+
+  @@index([candidatePhone])
+}

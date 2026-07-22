@@ -17,7 +17,6 @@ const NCC_OPTIONS: NccStatus[] = ['None', 'Army Wing (C Cert)', 'Navy Wing (C Ce
 interface ProfileStepProps {
   profile: CandidateProfile;
   onChange: (patch: Partial<CandidateProfile>) => void;
-  onBack: () => void;
   onSubmit: () => void;
 }
 
@@ -30,7 +29,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-export function ProfileStep({ profile, onChange, onBack, onSubmit }: ProfileStepProps) {
+export function ProfileStep({ profile, onChange, onSubmit }: ProfileStepProps) {
   const showStream = profile.education.startsWith('Class 12');
 
   return (
@@ -40,13 +39,13 @@ export function ProfileStep({ profile, onChange, onBack, onSubmit }: ProfileStep
         <h2 className="font-heading text-3xl font-bold tracking-wide uppercase sm:text-4xl">Candidate Profile</h2>
       </div>
 
-      <div className="bg-bg-panel-2 border border-border flex items-center justify-between px-4 py-3">
+      <div className="bg-bg-panel-2 border border-eligible flex items-center gap-2.5 px-4 py-3">
         <div className="text-[13px] text-khaki">
-          Age <span className="font-heading font-bold text-ink">{profile.age}</span> — captured at registration
+          Age <span className="font-heading font-bold text-ink">{profile.age}</span>
         </div>
-        <button type="button" onClick={onBack} className="text-[11px] tracking-wide text-amber uppercase">
-          Change →
-        </button>
+        <div className="border-eligible text-eligible border px-2.5 py-1 text-[11px] tracking-wide uppercase">
+          ✓ Verified at sign-in
+        </div>
       </div>
 
       <Field label="Gender">
@@ -92,13 +91,6 @@ export function ProfileStep({ profile, onChange, onBack, onSubmit }: ProfileStep
       </Field>
 
       <div className="mt-2.5 flex flex-wrap gap-3.5">
-        <button
-          type="button"
-          onClick={onBack}
-          className="font-heading cursor-pointer border border-border bg-transparent px-6.5 py-3.5 text-sm font-semibold tracking-wide text-muted uppercase"
-        >
-          ← Back
-        </button>
         <button
           type="button"
           onClick={onSubmit}

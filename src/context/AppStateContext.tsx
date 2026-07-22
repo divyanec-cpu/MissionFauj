@@ -3,7 +3,7 @@ import { usePersistedState } from '../lib/usePersistedState';
 import type { CandidateProfile } from '../types/profile';
 import type { SchemeResult } from '../types/schemes';
 import type { AiUsage, SsbRegistration, SubscriptionState, WrittenExam } from '../types/subscription';
-import type { Account, CandidateAccount, ParentAccount } from '../types/account';
+import type { VerifiedAuth } from '../types/auth';
 
 interface WrittenSubscriptions {
   NDA: SubscriptionState;
@@ -15,7 +15,7 @@ const DEFAULT_WRITTEN_SUBSCRIPTIONS: WrittenSubscriptions = { NDA: 'none', CDS: 
 const DEFAULT_AI_USAGE: AiUsage = { ssbAssistant: 0, digestAssist: 0 };
 
 interface AppStateValue {
-  account: Account | null;
+  auth: VerifiedAuth | null;
   profile: CandidateProfile | null;
   eligibilityResults: SchemeResult[] | null;
   writtenSubscriptions: WrittenSubscriptions;
@@ -23,9 +23,7 @@ interface AppStateValue {
   ssbRegistration: SsbRegistration | null;
   aiUsage: AiUsage;
   isExistingMember: boolean;
-  registerCandidate: (details: Omit<CandidateAccount, 'role'>) => void;
-  registerParent: (details: Omit<ParentAccount, 'role' | 'inviteCode' | 'inviteAccepted'>) => string;
-  acceptInvite: () => void;
+  completeLogin: (auth: VerifiedAuth) => void;
   setProfileAndEligibility: (profile: CandidateProfile, results: SchemeResult[]) => void;
   resetOnboarding: () => void;
   startWrittenTrial: (exam: WrittenExam) => void;
@@ -36,12 +34,8 @@ interface AppStateValue {
 
 const AppStateContext = createContext<AppStateValue | null>(null);
 
-function generateInviteCode(): string {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
-}
-
 export function AppStateProvider({ children }: { children: ReactNode }) {
-  const [account, setAccount] = usePersistedState<Account | null>('account', null);
+  const [auth, setAuth] = usePersistedState<VerifiedAuth | null>('auth', null);
   const [profile, setProfile] = usePersistedState<CandidateProfile | null>('profile', null);
   const [eligibilityResults, setEligibilityResults] = usePersistedState<SchemeResult[] | null>(
     'eligibilityResults',
@@ -59,7 +53,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     const isExistingMember = Object.values(writtenSubscriptions).some((s) => s !== 'none');
 
     return {
-      account,
+      auth,
       profile,
       eligibilityResults,
       writtenSubscriptions,
@@ -67,21 +61,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       ssbRegistration,
       aiUsage,
       isExistingMember,
-      registerCandidate: (details) => setAccount({ role: 'candidate', ...details }),
-      registerParent: (details) => {
-        const inviteCode = generateInviteCode();
-        setAccount({ role: 'parent', inviteCode, inviteAccepted: false, ...details });
-        return inviteCode;
-      },
-      acceptInvite: () => {
-        setAccount((prev) => (prev && prev.role === 'parent' ? { ...prev, inviteAccepted: true } : prev));
-      },
+      completeLogin: (nextAuth) => setAuth(nextAuth),
       setProfileAndEligibility: (nextProfile, results) => {
         setProfile(nextProfile);
         setEligibilityResults(results);
       },
       resetOnboarding: () => {
-        setAccount(null);
+        // Deliberately does not clear `auth` — retaking the eligibility
+        // briefing shouldn't force a candidate (and possibly their guardian)
+        // through phone/OTP/consent again. Login and onboarding are separate
+        // gates; only the latter resets here.
         setProfile(null);
         setEligibilityResults(null);
       },
@@ -95,14 +84,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       incrementAiUsage: (kind) => setAiUsage((prev) => ({ ...prev, [kind]: prev[kind] + 1 })),
     };
   }, [
-    account,
+    auth,
     profile,
     eligibilityResults,
     writtenSubscriptions,
     ssbSubscription,
     ssbRegistration,
     aiUsage,
-    setAccount,
+    setAuth,
     setProfile,
     setEligibilityResults,
     setWrittenSubscriptions,

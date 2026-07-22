@@ -7,22 +7,20 @@ import { ELIGIBILITY_RULES } from '../../data/eligibilityRules';
 import { DEFAULT_PROFILE, type CandidateProfile } from '../../types/profile';
 import type { SchemeResult } from '../../types/schemes';
 import { BriefingStep } from './steps/BriefingStep';
-import { RegisterStep } from './steps/RegisterStep';
 import { ProfileStep } from './steps/ProfileStep';
 import { ScanningStep } from './steps/ScanningStep';
 import { ReportStep } from './steps/ReportStep';
 import { PrepTeaserStep } from './steps/PrepTeaserStep';
 
-type Step = 'briefing' | 'register' | 'profile' | 'scanning' | 'report' | 'prep';
+type Step = 'briefing' | 'profile' | 'scanning' | 'report' | 'prep';
 
-const STEP_LABELS = ['Briefing', 'Register', 'Profile', 'Assessment', 'Written Prep'];
+const STEP_LABELS = ['Briefing', 'Profile', 'Assessment', 'Written Prep'];
 
 function activeIndexFor(step: Step): number {
   if (step === 'briefing') return 0;
-  if (step === 'register') return 1;
-  if (step === 'profile') return 2;
-  if (step === 'prep') return 4;
-  return 3; // scanning + report
+  if (step === 'profile') return 1;
+  if (step === 'prep') return 3;
+  return 2; // scanning + report
 }
 
 export function OnboardingPage() {
@@ -39,6 +37,8 @@ export function OnboardingPage() {
       setProfile(appState.profile);
       setResults(appState.eligibilityResults);
       setStep('report');
+    } else if (appState.auth) {
+      setProfile((prev) => ({ ...prev, age: appState.auth!.age }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -64,15 +64,10 @@ export function OnboardingPage() {
 
   const retakeBriefing = () => {
     appState.resetOnboarding();
-    setProfile(DEFAULT_PROFILE);
+    setProfile({ ...DEFAULT_PROFILE, age: appState.auth?.age ?? DEFAULT_PROFILE.age });
     setResults(null);
     setScanProgress(0);
     setStep('briefing');
-  };
-
-  const finishRegistration = (age: number) => {
-    setProfile((prev) => ({ ...prev, age }));
-    setStep('profile');
   };
 
   const summaryLine = `Age ${profile.age} · ${profile.education}${
@@ -87,13 +82,11 @@ export function OnboardingPage() {
       />
       <main className="flex flex-1 justify-center px-5 pt-6 pb-16 sm:px-8 sm:pt-10 lg:px-14">
         <div className="w-full max-w-[920px]">
-          {step === 'briefing' && <BriefingStep onBegin={() => setStep('register')} />}
-          {step === 'register' && <RegisterStep onComplete={finishRegistration} />}
+          {step === 'briefing' && <BriefingStep onBegin={() => setStep('profile')} />}
           {step === 'profile' && (
             <ProfileStep
               profile={profile}
               onChange={(patch) => setProfile((prev) => ({ ...prev, ...patch }))}
-              onBack={() => setStep('register')}
               onSubmit={runScan}
             />
           )}
