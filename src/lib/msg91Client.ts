@@ -32,16 +32,28 @@ function extractError(data: unknown): string {
   return 'Could not reach MSG91. Check your connection and try again.';
 }
 
+const REQUEST_TIMEOUT_MS = 15_000;
+
 async function post(path: string, body: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let res: Response;
   try {
     res = await fetch(`${WIDGET_BASE}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
-  } catch {
+  } catch (err) {
+    // A slow/unstable connection must surface as an error, not hang the
+    // "Sending…" button state forever with no feedback.
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Msg91ClientError('Request timed out. Check your connection and try again.');
+    }
     throw new Msg91ClientError('Could not reach MSG91. Check your connection and try again.');
+  } finally {
+    clearTimeout(timeout);
   }
   const data = await res.json().catch(() => ({}));
   return data;

@@ -1,15 +1,26 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const REQUEST_TIMEOUT_MS = 15_000;
 
 async function post<T>(path: string, body: unknown): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let res: Response;
   try {
     res = await fetch(`${API_BASE}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
-  } catch {
+  } catch (err) {
+    // A slow/unstable connection must surface as an error, not hang the
+    // calling button's "loading" state forever with no feedback.
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Request timed out. Check your connection and try again.');
+    }
     throw new Error('Could not reach the server. Check your connection and try again.');
+  } finally {
+    clearTimeout(timeout);
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { useAppState } from '../../context/AppStateContext';
 
@@ -7,18 +7,8 @@ interface AppHeaderProps {
   right?: ReactNode;
 }
 
-function maskPhone(phone: string) {
-  return phone ? 'XXXXX' + phone.slice(-4) : '';
-}
-
 export function AppHeader({ pageLabel, right }: AppHeaderProps) {
   const appState = useAppState();
-  const navigate = useNavigate();
-
-  const handleSignOut = () => {
-    appState.signOut();
-    navigate('/');
-  };
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-5 py-5 sm:px-8 lg:px-14">
@@ -45,16 +35,12 @@ export function AppHeader({ pageLabel, right }: AppHeaderProps) {
       <div className="flex flex-wrap items-center gap-2">
         {right}
         {appState.auth && (
-          <>
-            <span className="text-[11px] text-muted">+91 {maskPhone(appState.auth.candidatePhone)}</span>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="cursor-pointer border border-border bg-transparent px-2.5 py-1 text-[11px] text-muted hover:text-ink"
-            >
-              Sign Out
-            </button>
-          </>
+          <Link
+            to="/profile"
+            className="border border-border px-2.5 py-1 text-[11px] text-muted no-underline hover:text-ink"
+          >
+            Profile
+          </Link>
         )}
       </div>
     </header>

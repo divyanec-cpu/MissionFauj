@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AppStateProvider, useAppState } from './context/AppStateContext';
 import { LoginSequencePage } from './pages/login/LoginSequencePage';
 import { OnboardingPage } from './pages/onboarding/OnboardingPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { WrittenExamPrepPage } from './pages/written-exam/WrittenExamPrepPage';
 import { SsbTrainingPage } from './pages/ssb/SsbTrainingPage';
 import { ExpertConsultationPage } from './pages/ExpertConsultationPage';
@@ -22,6 +23,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<RootGate />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/written-exam-prep" element={<WrittenExamPrepPage />} />
           <Route path="/ssb-training" element={<SsbTrainingPage />} />
           <Route path="/expert-consultation" element={<ExpertConsultationPage />} />
