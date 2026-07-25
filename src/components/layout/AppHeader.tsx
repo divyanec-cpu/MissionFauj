@@ -30,19 +30,17 @@ export function AppHeader({ pageLabel, right }: AppHeaderProps) {
           >
             Glossary
           </Link>
+          {appState.auth && (
+            <Link
+              to="/profile"
+              className="border border-border px-2.5 py-1 text-[11px] text-muted no-underline hover:text-ink"
+            >
+              Profile
+            </Link>
+          )}
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {right}
-        {appState.auth && (
-          <Link
-            to="/profile"
-            className="border border-border px-2.5 py-1 text-[11px] text-muted no-underline hover:text-ink"
-          >
-            Profile
-          </Link>
-        )}
-      </div>
+      {right && <div className="flex flex-wrap items-center gap-2">{right}</div>}
     </header>
   );
 }
