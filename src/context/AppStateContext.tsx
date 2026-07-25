@@ -24,6 +24,7 @@ interface AppStateValue {
   aiUsage: AiUsage;
   isExistingMember: boolean;
   completeLogin: (auth: VerifiedAuth) => void;
+  signOut: () => void;
   setProfileAndEligibility: (profile: CandidateProfile, results: SchemeResult[]) => void;
   resetOnboarding: () => void;
   startWrittenTrial: (exam: WrittenExam) => void;
@@ -62,6 +63,19 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       aiUsage,
       isExistingMember,
       completeLogin: (nextAuth) => setAuth(nextAuth),
+      signOut: () => {
+        // A full account reset, not just clearing the auth gate — whoever
+        // logs in next (possibly a different candidate on a shared device)
+        // must not inherit this account's profile, eligibility, or
+        // subscription state.
+        setAuth(null);
+        setProfile(null);
+        setEligibilityResults(null);
+        setWrittenSubscriptions(DEFAULT_WRITTEN_SUBSCRIPTIONS);
+        setSsbSubscription('none');
+        setSsbRegistration(null);
+        setAiUsage(DEFAULT_AI_USAGE);
+      },
       setProfileAndEligibility: (nextProfile, results) => {
         setProfile(nextProfile);
         setEligibilityResults(results);
