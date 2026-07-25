@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Stepper } from '../../components/layout/Stepper';
-import { acceptConsent, confirmAge, resendOtp, sendOtp, verifyOtp, CONSENT_VERSION } from '../../lib/authApi';
+import { acceptConsent, confirmAge, registerOtpSent, verifyOtp, CONSENT_VERSION } from '../../lib/authApi';
+import { resendOtpClient, sendOtpClient, verifyOtpClient } from '../../lib/msg91Client';
 import { isValidIndianMobile, isValidName } from '../../lib/validation';
 import type { VerifiedAuth } from '../../types/auth';
 
@@ -172,6 +173,7 @@ export function LoginSequencePage({ onDone }: LoginSequenceProps) {
   const [sendingOtp, setSendingOtp] = useState(false);
 
   const [candidateToken, setCandidateToken] = useState('');
+  const [reqId, setReqId] = useState('');
   const [otp, setOtp] = useState('');
   const [otpError, setOtpError] = useState('');
   const [otpShake, setOtpShake] = useState(false);
@@ -198,6 +200,7 @@ export function LoginSequencePage({ onDone }: LoginSequenceProps) {
   const [guardianPhone, setGuardianPhone] = useState('');
   const [guardianPhoneError, setGuardianPhoneError] = useState('');
   const [guardianToken, setGuardianToken] = useState('');
+  const [guardianReqId, setGuardianReqId] = useState('');
   const [guardianOtp, setGuardianOtp] = useState('');
   const [guardianOtpError, setGuardianOtpError] = useState('');
   const [guardianOtpShake, setGuardianOtpShake] = useState(false);
@@ -276,7 +279,9 @@ export function LoginSequencePage({ onDone }: LoginSequenceProps) {
     setSendingOtp(true);
     setPhoneError('');
     try {
-      await sendOtp(phone, 'candidate');
+      const newReqId = await sendOtpClient(phone);
+      setReqId(newReqId);
+      await registerOtpSent(phone, 'candidate', newReqId);
       setOtp('');
       setOtpError('');
       setStep('otp');
@@ -294,7 +299,8 @@ export function LoginSequencePage({ onDone }: LoginSequenceProps) {
     sendingRef.current = true;
     setSendingOtp(true);
     try {
-      await resendOtp(phone);
+      await resendOtpClient(reqId);
+      await registerOtpSent(phone, 'candidate', reqId);
       startResendTimer(resendInterval, setResendTimer);
     } catch (err) {
       setOtpError(err instanceof Error ? err.message : 'Could not resend the code. Please try again.');
@@ -320,7 +326,8 @@ export function LoginSequencePage({ onDone }: LoginSequenceProps) {
     verifyingRef.current = true;
     setVerifyingOtp(true);
     try {
-      const { token } = await verifyOtp(phone, otp, 'candidate');
+      await verifyOtpClient(reqId, otp);
+      const { token } = await verifyOtp(phone, 'candidate');
       if (resendInterval.current) clearInterval(resendInterval.current);
       setCandidateToken(token);
       setStep('dob');
@@ -388,7 +395,9 @@ export function LoginSequencePage({ onDone }: LoginSequenceProps) {
     setGuardianSendingOtp(true);
     setGuardianPhoneError('');
     try {
-      await sendOtp(guardianPhone, 'guardian');
+      const newReqId = await sendOtpClient(guardianPhone);
+      setGuardianReqId(newReqId);
+      await registerOtpSent(guardianPhone, 'guardian', newReqId);
       setGuardianOtp('');
       setGuardianOtpError('');
       setStep('guardianOtp');
@@ -406,7 +415,8 @@ export function LoginSequencePage({ onDone }: LoginSequenceProps) {
     guardianSendingRef.current = true;
     setGuardianSendingOtp(true);
     try {
-      await resendOtp(guardianPhone);
+      await resendOtpClient(guardianReqId);
+      await registerOtpSent(guardianPhone, 'guardian', guardianReqId);
       startResendTimer(guardianResendInterval, setGuardianResendTimer);
     } catch (err) {
       setGuardianOtpError(err instanceof Error ? err.message : 'Could not resend the code. Please try again.');
@@ -425,7 +435,8 @@ export function LoginSequencePage({ onDone }: LoginSequenceProps) {
     guardianVerifyingRef.current = true;
     setGuardianVerifyingOtp(true);
     try {
-      const { token } = await verifyOtp(guardianPhone, guardianOtp, 'guardian');
+      await verifyOtpClient(guardianReqId, guardianOtp);
+      const { token } = await verifyOtp(guardianPhone, 'guardian');
       if (guardianResendInterval.current) clearInterval(guardianResendInterval.current);
       setGuardianToken(token);
       setStep('guardianConsent');

@@ -22,16 +22,18 @@ export type OtpPurpose = 'candidate' | 'guardian';
 
 export const CONSENT_VERSION = 'v1';
 
-export function sendOtp(phone: string, purpose: OtpPurpose) {
-  return post<{ ok: true }>('/auth/send-otp', { phone, purpose });
+// Bookkeeping only — the actual OTP send happens client-side against MSG91
+// directly (see msg91Client.ts). This just tells our backend a send was
+// initiated, so verify-otp below has a freshness check to require.
+export function registerOtpSent(phone: string, purpose: OtpPurpose, reqId: string) {
+  return post<{ ok: true }>('/auth/otp-sent', { phone, purpose, reqId });
 }
 
-export function resendOtp(phone: string) {
-  return post<{ ok: true }>('/auth/resend-otp', { phone });
-}
-
-export function verifyOtp(phone: string, otp: string, purpose: OtpPurpose) {
-  return post<{ token: string }>('/auth/verify-otp', { phone, otp, purpose });
+// The client has already verified the code directly with MSG91 before
+// calling this — it only asks our backend for the session token, it does
+// not send the code here.
+export function verifyOtp(phone: string, purpose: OtpPurpose) {
+  return post<{ token: string }>('/auth/verify-otp', { phone, purpose });
 }
 
 export function confirmAge(token: string, dobDay: number, dobMonth: number, dobYear: number) {

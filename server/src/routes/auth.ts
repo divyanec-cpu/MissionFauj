@@ -1,15 +1,20 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
-import { Msg91ConfigError, Msg91RequestError, resendOtp, sendOtp, verifyOtp } from '../lib/msg91.js';
 import { calendarAge, parseDob } from '../lib/age.js';
 import { signAgeVerified, signPhoneVerified, verifyAgeVerified, verifyPhoneVerified } from '../lib/jwt.js';
 
 export const authRouter = Router();
 
 const phoneSchema = z.string().regex(/^\d{10}$/, 'phone must be exactly 10 digits');
-const otpSchema = z.string().regex(/^\d{4,8}$/, 'otp must be 4-8 digits');
 const purposeSchema = z.enum(['candidate', 'guardian']);
+
+// OTP session bookkeeping is only a "was a code recently requested for this
+// number" freshness gate — it is NOT itself proof of the correct code, since
+// send/verify with MSG91 happen client-side now (see note on /verify-otp
+// below for why). Stale rows outside this window can't be used to finish
+// verification, so a half-abandoned flow can't be replayed much later.
+const OTP_SESSION_TTL_MS = 15 * 60 * 1000;
 
 // The one consent wording every ConsentRecord in the current build refers
 // to — bump this string (and the copy in Login Sequence.dc.html /
@@ -17,86 +22,49 @@ const purposeSchema = z.enum(['candidate', 'guardian']);
 // records stay attributable to the wording that was actually shown.
 const CONSENT_VERSION = 'v1';
 
-function handleMsg91Error(err: unknown, res: import('express').Response) {
-  if (err instanceof Msg91ConfigError) {
-    res.status(503).json({ error: err.message, code: 'MSG91_NOT_CONFIGURED' });
+// POST /auth/otp-sent { phone, purpose, reqId }
+// Called by the client right after IT sends the OTP directly to MSG91
+// (server-to-server calls from Render get intermittently IP-blocked by
+// MSG91's widget anti-abuse layer — see git history — so send/resend/verify
+// all run client-side now, using the user's own network). This endpoint is
+// bookkeeping only: it does not talk to MSG91, it just records that a send
+// was initiated, so /verify-otp below has something to check freshness
+// against instead of accepting a bare claim out of nowhere.
+authRouter.post('/otp-sent', async (req, res) => {
+  const body = z.object({ phone: phoneSchema, purpose: purposeSchema, reqId: z.string().min(1) }).safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.issues[0]?.message ?? 'Invalid request' });
     return;
   }
-  if (err instanceof Msg91RequestError) {
-    res.status(502).json({ error: err.message, code: 'MSG91_REQUEST_FAILED' });
-    return;
-  }
-  res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-}
+  const { phone, purpose, reqId } = body.data;
+  await prisma.otpSession.upsert({
+    where: { phone },
+    create: { phone, reqId, purpose },
+    update: { reqId, purpose },
+  });
+  res.json({ ok: true });
+});
 
-// POST /auth/send-otp { phone, purpose }
-authRouter.post('/send-otp', async (req, res) => {
+// POST /auth/verify-otp { phone, purpose } -> { token }
+// The client has already completed send + verify directly against MSG91
+// (browser-to-MSG91, not through this backend) before calling this. This
+// endpoint does not re-check the code with MSG91 — it only confirms a
+// matching /otp-sent bookkeeping row exists and is recent, then issues the
+// phoneVerified token used by the next step (confirm-age for the candidate,
+// or the consent step for a guardian). It is never stored client-side beyond
+// the current sign-up session.
+authRouter.post('/verify-otp', async (req, res) => {
   const body = z.object({ phone: phoneSchema, purpose: purposeSchema }).safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.issues[0]?.message ?? 'Invalid request' });
     return;
   }
   const { phone, purpose } = body.data;
-  try {
-    const reqId = await sendOtp(phone);
-    await prisma.otpSession.upsert({
-      where: { phone },
-      create: { phone, reqId, purpose },
-      update: { reqId, purpose },
-    });
-    res.json({ ok: true });
-  } catch (err) {
-    handleMsg91Error(err, res);
-  }
-});
-
-// POST /auth/resend-otp { phone }
-authRouter.post('/resend-otp', async (req, res) => {
-  const body = z.object({ phone: phoneSchema }).safeParse(req.body);
-  if (!body.success) {
-    res.status(400).json({ error: body.error.issues[0]?.message ?? 'Invalid request' });
-    return;
-  }
-  const session = await prisma.otpSession.findUnique({ where: { phone: body.data.phone } });
-  if (!session) {
-    res.status(400).json({ error: 'No OTP was sent to this number yet — go back and send one first.' });
-    return;
-  }
-  try {
-    await resendOtp(session.reqId);
-    res.json({ ok: true });
-  } catch (err) {
-    handleMsg91Error(err, res);
-  }
-});
-
-// POST /auth/verify-otp { phone, otp, purpose } -> { token }
-// token proves this phone was just verified, for the next step in the same
-// sitting (confirm-age for the candidate, or the consent step for a guardian)
-// — it is never stored client-side beyond the current sign-up session.
-authRouter.post('/verify-otp', async (req, res) => {
-  const body = z.object({ phone: phoneSchema, otp: otpSchema, purpose: purposeSchema }).safeParse(req.body);
-  if (!body.success) {
-    res.status(400).json({ error: body.error.issues[0]?.message ?? 'Invalid request' });
-    return;
-  }
-  const { phone, otp, purpose } = body.data;
 
   const session = await prisma.otpSession.findUnique({ where: { phone } });
-  if (!session || session.purpose !== purpose) {
-    res.status(400).json({ error: 'No OTP was sent to this number yet — go back and send one first.' });
-    return;
-  }
-
-  let verified: boolean;
-  try {
-    verified = await verifyOtp(session.reqId, otp);
-  } catch (err) {
-    handleMsg91Error(err, res);
-    return;
-  }
-  if (!verified) {
-    res.status(401).json({ error: 'Incorrect or expired code' });
+  const isFresh = !!session && Date.now() - session.updatedAt.getTime() <= OTP_SESSION_TTL_MS;
+  if (!session || session.purpose !== purpose || !isFresh) {
+    res.status(400).json({ error: 'No OTP was sent to this number recently — go back and send one first.' });
     return;
   }
   await prisma.otpSession.delete({ where: { phone } }).catch(() => {});

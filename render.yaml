@@ -7,8 +7,12 @@
 # with `fromDatabase` auto-wiring: this is the first time MissionFauj needs a
 # database, so provisioning it is a deliberate one-time action for you to take
 # in the Render dashboard (New > PostgreSQL), not something a blueprint push
-# should silently create. Paste the resulting connection string in manually,
-# same as the MSG91 keys below.
+# should silently create. Paste the resulting connection string in manually.
+#
+# No MSG91 vars here: OTP send/verify happens client-side (browser calls
+# MSG91 directly) since Render's outbound IP gets intermittently blocked by
+# MSG91's widget anti-abuse layer. The widget credentials live in the
+# frontend build's VITE_MSG91_* env vars instead.
 services:
   - type: web
     name: missionfauj-otp-server
@@ -27,7 +31,3 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
-      - key: MSG91_WIDGET_ID
-        sync: false
-      - key: MSG91_TOKEN_AUTH
-        sync: false
