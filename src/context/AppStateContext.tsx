@@ -63,19 +63,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       aiUsage,
       isExistingMember,
       completeLogin: (nextAuth) => setAuth(nextAuth),
-      signOut: () => {
-        // A full account reset, not just clearing the auth gate — whoever
-        // logs in next (possibly a different candidate on a shared device)
-        // must not inherit this account's profile, eligibility, or
-        // subscription state.
-        setAuth(null);
-        setProfile(null);
-        setEligibilityResults(null);
-        setWrittenSubscriptions(DEFAULT_WRITTEN_SUBSCRIPTIONS);
-        setSsbSubscription('none');
-        setSsbRegistration(null);
-        setAiUsage(DEFAULT_AI_USAGE);
-      },
+      // Just the login gate — profile, eligibility, and subscription state
+      // stay put, so logging back in with the same number picks up right
+      // where it left off. Login and onboarding/subscription data are
+      // separate gates; only the former resets here.
+      signOut: () => setAuth(null),
       setProfileAndEligibility: (nextProfile, results) => {
         setProfile(nextProfile);
         setEligibilityResults(results);

@@ -112,9 +112,8 @@ export function ProfilePage() {
             <div className="flex flex-col gap-2.5">
               <div className="font-heading font-semibold text-ink">Sign Out</div>
               <p className="text-[12px] text-muted">
-                This clears your saved progress on this device (profile, eligibility report, and subscription
-                status) — mainly meant for switching accounts on a shared device, not for a quick logout on your
-                own phone.
+                Logs you out of this device. Your profile, eligibility report, and subscriptions are kept — signing
+                back in with the same mobile number picks up right where you left off.
               </p>
               <button
                 type="button"
