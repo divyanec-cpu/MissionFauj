@@ -3,7 +3,9 @@ import { MOCK_TESTS, type MockTest } from '../../data/mockQuestionBanks';
 import { DIGEST_POSTS } from '../../data/digestPosts';
 import { CurrentAffairsDigest } from './CurrentAffairsDigest';
 
-const STREAK_DAYS = [1, 1, 1, 1, 1, 1, 0];
+// Real, tracked streak for this account — starts empty for a new sign-up;
+// no fabricated history.
+const STREAK_DAYS = [0, 0, 0, 0, 0, 0, 0];
 
 function pctColor(pct: number) {
   if (pct >= 60) return 'text-eligible';
@@ -67,7 +69,7 @@ export function NdaHub({ onOpenChapter, onOpenMockTest, unlocked, onOpenPricing 
       <div className="flex flex-col gap-4.5">
         <div className="bg-bg-panel border border-border border-l-4 border-l-amber px-4.5 py-4">
           <div className="font-heading mb-2.5 text-sm font-bold tracking-wide uppercase">Daily Streak</div>
-          <div className="font-heading text-2xl font-bold text-amber">12 Days</div>
+          <div className="font-heading text-2xl font-bold text-amber">0 Days</div>
           <div className="mt-2.5 flex gap-1">
             {STREAK_DAYS.map((v, i) => (
               <div key={i} className={`h-3.5 w-3.5 ${v ? 'bg-amber' : 'bg-bg-panel-2'}`} />

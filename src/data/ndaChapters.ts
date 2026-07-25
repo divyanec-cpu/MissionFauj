@@ -8,23 +8,25 @@ export interface Subject {
   chapters: Chapter[];
 }
 
+// pct is real, tracked coverage for this account — every chapter starts at
+// 0 since there is no fabricated activity history for a new sign-up.
 export const NDA_MATHS_CHAPTERS: Chapter[] = [
-  { name: 'Algebra', pct: 80 },
-  { name: 'Matrices & Determinants', pct: 60 },
-  { name: 'Trigonometry', pct: 45 },
-  { name: 'Quadratic Equations', pct: 30 },
-  { name: 'Analytical Geometry', pct: 10 },
+  { name: 'Algebra', pct: 0 },
+  { name: 'Matrices & Determinants', pct: 0 },
+  { name: 'Trigonometry', pct: 0 },
+  { name: 'Quadratic Equations', pct: 0 },
+  { name: 'Analytical Geometry', pct: 0 },
   { name: 'Differential Calculus', pct: 0 },
   { name: 'Integral Calculus', pct: 0 },
   { name: 'Vector Algebra & Statistics', pct: 0 },
 ];
 
 export const NDA_GAT_CHAPTERS: Chapter[] = [
-  { name: 'English — Grammar & Usage', pct: 70 },
-  { name: 'English — Comprehension', pct: 55 },
-  { name: 'GK — Physics & Chemistry', pct: 40 },
-  { name: 'GK — History & Geography', pct: 20 },
-  { name: 'GK — Current Events', pct: 15 },
+  { name: 'English — Grammar & Usage', pct: 0 },
+  { name: 'English — Comprehension', pct: 0 },
+  { name: 'GK — Physics & Chemistry', pct: 0 },
+  { name: 'GK — History & Geography', pct: 0 },
+  { name: 'GK — Current Events', pct: 0 },
 ];
 
 export const NDA_SUBJECTS: Subject[] = [
