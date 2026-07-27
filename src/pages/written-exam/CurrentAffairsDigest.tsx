@@ -31,6 +31,9 @@ export function CurrentAffairsDigest({ posts, horizontal, unlocked, onOpenPricin
   return (
     <div>
       <div className="font-heading mb-3 text-sm font-bold tracking-wide uppercase">Current Affairs</div>
+      {posts.length === 0 && (
+        <div className="text-[13px] text-muted">New briefs are added regularly — check back soon.</div>
+      )}
       <div className={horizontal ? 'flex gap-3.5 overflow-x-auto pb-1.5' : 'flex flex-col gap-3'}>
         {posts.map((p) => (
           <div
