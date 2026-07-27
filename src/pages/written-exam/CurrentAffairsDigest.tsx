@@ -42,13 +42,24 @@ export function CurrentAffairsDigest({ posts, horizontal, unlocked, onOpenPricin
           >
             <div className="text-[10px] tracking-wide text-amber uppercase">{p.date}</div>
             <div className="mt-0.5 text-[13px] leading-snug">{p.title}</div>
-            <button
-              type="button"
-              onClick={() => openChat(p)}
-              className="font-heading mt-1.5 cursor-pointer border-none bg-transparent p-0 text-[11px] font-semibold tracking-wide text-amber uppercase"
-            >
-              {openPost === p ? '← Close' : 'Chat with AI Assist →'}
-            </button>
+            <div className="mt-1 text-[13px] leading-snug text-muted">{p.detail}</div>
+            <div className="mt-1.5 flex items-center gap-3">
+              <a
+                href={p.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] text-muted underline decoration-dotted hover:text-ink"
+              >
+                Source: {p.sourceName}
+              </a>
+              <button
+                type="button"
+                onClick={() => openChat(p)}
+                className="font-heading cursor-pointer border-none bg-transparent p-0 text-[11px] font-semibold tracking-wide text-amber uppercase"
+              >
+                {openPost === p ? '← Close' : 'Chat with AI Assist →'}
+              </button>
+            </div>
           </div>
         ))}
       </div>
