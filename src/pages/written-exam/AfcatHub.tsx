@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AFCAT_SUBJECTS, EKT_BRANCHES, EKT_TOPICS, type EktBranch } from '../../data/afcatSubjects';
 import { EKT_QUESTION_BANKS, MOCK_TESTS, type MockTest } from '../../data/mockQuestionBanks';
-import { DIGEST_POSTS } from '../../data/digestPosts';
+import type { DigestPost } from '../../data/digestPosts';
+import { fetchDigestPosts } from '../../lib/contentApi';
 import { PillButton } from '../../components/ui/PillButton';
 import { CurrentAffairsDigest } from './CurrentAffairsDigest';
 
@@ -27,6 +28,15 @@ export function AfcatHub({ onOpenMockTest, unlocked, onOpenPricing }: AfcatHubPr
     ektMock,
     { id: 'afcat-sectional-reasoning', exam: 'AFCAT', name: 'Sectional — Reasoning', meta: '20 min · 25 Q', durationSec: 4 * 60, questions: afcatFull.questions.slice(1) },
   ];
+  const [digestPosts, setDigestPosts] = useState<DigestPost[]>([]);
+
+  useEffect(() => {
+    fetchDigestPosts()
+      .then(setDigestPosts)
+      .catch(() => {
+        /* the digest section shows its own "no briefs" state when empty */
+      });
+  }, []);
 
   return (
     <div className="flex flex-col gap-6.5 animate-rise-in">
@@ -90,7 +100,7 @@ export function AfcatHub({ onOpenMockTest, unlocked, onOpenPricing }: AfcatHubPr
         </div>
       </div>
 
-      <CurrentAffairsDigest posts={DIGEST_POSTS} horizontal unlocked={unlocked} onOpenPricing={onOpenPricing} />
+      <CurrentAffairsDigest posts={digestPosts} horizontal unlocked={unlocked} onOpenPricing={onOpenPricing} />
     </div>
   );
 }

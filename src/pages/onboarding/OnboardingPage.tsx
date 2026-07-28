@@ -3,9 +3,9 @@ import { AppHeader } from '../../components/layout/AppHeader';
 import { Stepper } from '../../components/layout/Stepper';
 import { useAppState } from '../../context/AppStateContext';
 import { evaluateSchemes } from '../../lib/eligibilityEngine';
-import { ELIGIBILITY_RULES } from '../../data/eligibilityRules';
+import { fetchEligibilityRules } from '../../lib/contentApi';
 import { DEFAULT_PROFILE, type CandidateProfile } from '../../types/profile';
-import type { SchemeResult } from '../../types/schemes';
+import type { SchemeResult, SchemeRule } from '../../types/schemes';
 import { BriefingStep } from './steps/BriefingStep';
 import { ProfileStep } from './steps/ProfileStep';
 import { ScanningStep } from './steps/ScanningStep';
@@ -29,6 +29,8 @@ export function OnboardingPage() {
   const [profile, setProfile] = useState<CandidateProfile>(DEFAULT_PROFILE);
   const [results, setResults] = useState<SchemeResult[] | null>(null);
   const [scanProgress, setScanProgress] = useState(0);
+  const [rules, setRules] = useState<SchemeRule[]>([]);
+  const [rulesError, setRulesError] = useState<string | null>(null);
   const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -44,6 +46,12 @@ export function OnboardingPage() {
   }, []);
 
   useEffect(() => {
+    fetchEligibilityRules()
+      .then(setRules)
+      .catch((err) => setRulesError(err instanceof Error ? err.message : 'Could not load eligibility rules.'));
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (scanTimer.current) clearTimeout(scanTimer.current);
       if (advanceTimer.current) clearTimeout(advanceTimer.current);
@@ -55,7 +63,7 @@ export function OnboardingPage() {
     setScanProgress(0);
     scanTimer.current = setTimeout(() => setScanProgress(100), 60);
     advanceTimer.current = setTimeout(() => {
-      const computed = evaluateSchemes(profile, ELIGIBILITY_RULES);
+      const computed = evaluateSchemes(profile, rules);
       setResults(computed);
       appState.setProfileAndEligibility(profile, computed);
       setStep('report');
@@ -90,9 +98,8 @@ export function OnboardingPage() {
               onSubmit={runScan}
             />
           )}
-          {step === 'scanning' && (
-            <ScanningStep scanProgress={scanProgress} schemeNames={ELIGIBILITY_RULES.map((r) => r.name)} />
-          )}
+          {step === 'scanning' && <ScanningStep scanProgress={scanProgress} schemeNames={rules.map((r) => r.name)} />}
+          {rulesError && step === 'scanning' && <div className="mt-3 text-[13px] text-not-eligible">{rulesError}</div>}
           {step === 'report' && results && (
             <ReportStep
               results={results}

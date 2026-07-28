@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { usePersistedState } from '../lib/usePersistedState';
+import { trackSubscriptionEvent } from '../lib/contentApi';
 import type { CandidateProfile } from '../types/profile';
 import type { SchemeResult } from '../types/schemes';
 import type { AiUsage, SsbRegistration, SubscriptionState, WrittenExam } from '../types/subscription';
@@ -80,10 +81,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setEligibilityResults(null);
       },
+      // The tracking call is deliberately outside the setState updater —
+      // React (in StrictMode) invokes updater functions twice to surface
+      // impure reducers, which would otherwise double-log this event.
       startWrittenTrial: (exam) => {
+        if (writtenSubscriptions[exam] !== 'subscribed') trackSubscriptionEvent('written_trial', exam);
         setWrittenSubscriptions((prev) => ({ ...prev, [exam]: prev[exam] === 'subscribed' ? 'subscribed' : 'trial' }));
       },
       startSsbTrial: () => {
+        if (ssbSubscription !== 'subscribed') trackSubscriptionEvent('ssb_trial');
         setSsbSubscription((prev) => (prev === 'subscribed' ? 'subscribed' : 'trial'));
       },
       registerSsb: (registration) => setSsbRegistration(registration),

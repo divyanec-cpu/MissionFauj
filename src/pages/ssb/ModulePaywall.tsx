@@ -1,4 +1,5 @@
-import { SSB_MODULE_PRICE } from '../../data/pricingPlans';
+import { useEffect, useState } from 'react';
+import { fetchPricingPlans } from '../../lib/contentApi';
 
 interface ModulePaywallProps {
   moduleName: string;
@@ -8,8 +9,23 @@ interface ModulePaywallProps {
   onStartTrial: () => void;
 }
 
+const FALLBACK_PRICE = 899;
+
 export function ModulePaywall({ moduleName, moduleDesc, scheme, isExistingMember, onStartTrial }: ModulePaywallProps) {
-  const shownPrice = isExistingMember ? Math.round(SSB_MODULE_PRICE * 0.8) : SSB_MODULE_PRICE;
+  const [basePrice, setBasePrice] = useState(FALLBACK_PRICE);
+
+  useEffect(() => {
+    fetchPricingPlans('ssb')
+      .then((plans) => {
+        const value = plans[0]?.priceValue;
+        if (typeof value === 'number') setBasePrice(value);
+      })
+      .catch(() => {
+        /* keep the fallback price — this screen shouldn't hard-fail on a pricing fetch */
+      });
+  }, []);
+
+  const shownPrice = isExistingMember ? Math.round(basePrice * 0.8) : basePrice;
 
   return (
     <div className="flex max-w-md flex-col gap-5 pt-4 animate-rise-in">
@@ -33,7 +49,7 @@ export function ModulePaywall({ moduleName, moduleDesc, scheme, isExistingMember
       <div className="bg-bg-panel border border-amber flex flex-col gap-2 p-5.5">
         <div className="font-heading text-lg font-bold uppercase">SSB Prep — {scheme}</div>
         <div className="flex items-baseline gap-2.5">
-          {isExistingMember && <div className="text-[15px] text-muted line-through">₹{SSB_MODULE_PRICE}</div>}
+          {isExistingMember && <div className="text-[15px] text-muted line-through">₹{basePrice}</div>}
           <div className="font-heading text-[28px] font-bold text-khaki">
             ₹{shownPrice}
             <span className="text-[13px] font-normal text-muted"> / month</span>

@@ -1,36 +1,19 @@
 export interface PricingPlan {
   name: string;
   price: string;
+  // Only populated for the 'ssb' scope — the numeric value ModulePaywall
+  // needs for the 20% existing-member-discount calculation. 'written' scope
+  // plans only ever display `price` as-is.
+  priceValue?: number | null;
   period: string;
   highlighted?: boolean;
   badge?: string;
   perks: string[];
 }
 
-export function getWrittenPricingPlans(examName: string): PricingPlan[] {
-  return [
-    {
-      name: 'Monthly',
-      price: '₹499',
-      period: 'per month',
-      perks: [`${examName} written prep`, 'Full-length & sectional mocks', 'Current-affairs digest'],
-    },
-    {
-      name: 'Quarterly',
-      price: '₹1,199',
-      period: 'per quarter · ₹400/mo',
-      highlighted: true,
-      badge: 'Most Popular',
-      perks: ['Everything in Monthly', 'SSB practice, all schemes', 'OLQ self-assessment'],
-    },
-    {
-      name: 'Till Exam Day',
-      price: '₹1,999',
-      period: 'one-time, valid till result',
-      perks: ['Everything in Quarterly', 'Locked-in access through your exam cycle'],
-    },
-  ];
-}
+// Actual plans (both 'written' and 'ssb' scope) are admin-editable
+// (server/src/routes/admin/pricingPlans.ts) and fetched at runtime via
+// src/lib/contentApi.ts's fetchPricingPlans(scope).
 
 export const FEATURE_LIST = [
   { title: 'Chapter Notes', body: 'Original, exam-focused notes for every NDA, CDS and AFCAT subject.' },
@@ -57,6 +40,3 @@ export const FEATURE_LIST = [
     body: 'AI-based feedback on your written mock performance — accuracy trends, weak chapters, time management. SSB practice stays self-review, never AI-scored.',
   },
 ];
-
-export const SSB_BASE_PRICES: Record<string, number> = { NDA: 799, CDS: 899, AFCAT: 899 };
-export const SSB_MODULE_PRICE = 899;

@@ -30,7 +30,7 @@ Steps: `briefing → profile → scanning → report → prep`. Returning users 
 
 - **Briefing**: what the scan covers.
 - **Profile**: age (locked, "✓ Verified at sign-in", from the Login Sequence — not re-editable), gender, marital status, education level, 12th stream (conditional on education), NCC status.
-- **Scanning**: animated scan against the 13-scheme eligibility table.
+- **Scanning**: animated scan against the 13-scheme eligibility table (fetched from the database at runtime, admin-editable at `/admin/eligibility-rules` — see Technical Brief §6 — not a static frontend file).
 - **Report**: per-scheme eligible/not-eligible cards with specific reasons (age/education/marital/NCC/stream), counts of eligible vs. not.
 - **Prep** (`PrepTeaserStep.tsx`): exam picker (NDA/CDS/AFCAT cards). Clicking "See {exam} Process & Timeline" opens a full **selection-process flowchart** (`ExamProcessTimeline.tsx` + `examTimelines.ts`) — notification → application → written exam → result → SSB/AFSB → medical → merit list → joining, with realistic month-level timing and a disclaimer to check official sites for exact current dates. Framed as useful for a parent to see too, not just the candidate. "Continue to {exam} Prep" then goes to the actual hub.
 
@@ -41,7 +41,7 @@ Tabs shown only for exams the eligibility scan cleared. Each exam has its own hu
 - **NDA** (`NdaHub.tsx`): chapter accordion (Mathematics, GAT — English & GK), each chapter showing real (zeroed-until-tracked) completion %; a daily streak card; Mock Tests (Sectional Trigonometry, Full-Length Maths, Full-Length GAT); Current Affairs digest with per-post "Chat with AI Assist" (real Claude-backed answers, contextualized to the post — see §9).
 - **CDS** (`CdsHub.tsx`): track toggle (IMA/INA/AFA vs. OTA — OTA skips the Maths paper), subject list with completion %.
 - **AFCAT** (`AfcatHub.tsx`): dual AFCAT/EKT tracks with a branch picker (Mechanical/Computer Science/Electrical & Electronics) for the technical EKT paper.
-- **Shared**: `ChapterDetail.tsx` (definition/formulas/solved example — only Quadratic Equations has full authored content, others fall back to a generic note), `MockTestRunner.tsx` (per-question or overall timer, submit → score + right/wrong breakdown — real scoring, since this is objective content), `QuizRunner.tsx` (shorter, immediate feedback), `FeaturesOverview.tsx` → `PricingPlansView.tsx` (7-day trial CTA, no live payment).
+- **Shared**: `ChapterDetail.tsx` (definition/formulas/solved example — only Quadratic Equations has full authored content, others fall back to a generic note), `MockTestRunner.tsx` (per-question or overall timer, submit → score + right/wrong breakdown — real scoring, since this is objective content), `QuizRunner.tsx` (shorter, immediate feedback), `FeaturesOverview.tsx` → `PricingPlansView.tsx` (7-day trial CTA, no live payment; plans are fetched from the database, admin-editable at `/admin/pricing-plans`).
 - SSB-teaser banner links to `/ssb-training`.
 
 **Question banks** (`mockQuestionBanks.ts`, `quizQuestions.ts`): original, verified MCQs. Mock tests: 10–20 questions each depending on test; quick quizzes: 12–13 per exam for variety on repeat attempts.
@@ -59,7 +59,7 @@ Tabs shown only for exams the eligibility scan cleared. Each exam has its own hu
 
 ## 6. Expert Consultation (`src/pages/ExpertConsultationPage.tsx`)
 
-Category filter (IO / GTO / Psychologist / Board President / English & Confidence coach) → expert card (designation, credentials, bio, price — currently `"— to be added —"` placeholders, intentionally CMS-editable later) → slot picker → confirmation. Explicitly a v1.1+ stretch per the original brief, built prototype-exact with no functional scope beyond booking-flow UI.
+Category filter (IO / GTO / Psychologist / Board President / English & Confidence coach) → expert card (designation, credentials, bio, price — fetched from the database, admin-editable at `/admin/experts`; currently still holding their original `"— to be added —"` placeholder content) → slot picker → confirmation. Explicitly a v1.1+ stretch per the original brief, built prototype-exact with no functional scope beyond booking-flow UI.
 
 ## 7. Help Center & Glossary
 
@@ -70,7 +70,7 @@ Category filter (IO / GTO / Psychologist / Board President / English & Confidenc
 
 Accessible from every authenticated page via the header's "Profile" link. Shows:
 - **Account**: masked phone, age, minor/adult + guardian-consent status, guardian name/phone if applicable.
-- **Subscriptions**: per-track status badge (Not Started / Trial Active / Subscribed) for NDA/CDS/AFCAT written prep and SSB training, with a trial-start link where not yet started, and the existing-member discount note where relevant.
+- **Subscriptions**: per-track status badge (Not Started / Trial Active / Subscribed) for NDA/CDS/AFCAT written prep and SSB training, with a trial-start link where not yet started, and the existing-member discount note where relevant. Starting a trial also logs an aggregate event (exam/scope only, nothing tied to the candidate's phone) visible on the owner-only `/admin/stats` dashboard — same non-per-user-profile treatment as AI Assist usage, see §9.
 - **Sign Out**: logs out of this device; profile/eligibility/subscriptions are kept (see Technical Brief §3 for the reasoning).
 
 ## 9. AI Assist (`src/components/ai/AiAssistChat.tsx`)

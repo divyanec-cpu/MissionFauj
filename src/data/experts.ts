@@ -11,8 +11,9 @@ export interface Expert {
   bonus?: boolean;
 }
 
-const PLACEHOLDER = '— to be added —';
-
+// Actual listings are admin-editable (server/src/routes/admin/experts.ts) and
+// fetched at runtime via src/lib/contentApi.ts's fetchExperts() — this file
+// now only keeps the shared types plus the fixed category filter list.
 export const EXPERT_CATEGORIES: Array<'All' | ExpertCategory> = [
   'All',
   'IO',
@@ -20,14 +21,6 @@ export const EXPERT_CATEGORIES: Array<'All' | ExpertCategory> = [
   'Psychologist',
   'Board President',
   'English & Confidence',
-];
-
-export const EXPERTS: Expert[] = [
-  { role: 'Interviewing Officer', category: 'IO', accent: 'var(--color-amber)', name: PLACEHOLDER, credentials: PLACEHOLDER, bio: PLACEHOLDER, price: PLACEHOLDER },
-  { role: 'Group Testing Officer', category: 'GTO', accent: 'var(--color-steel)', name: PLACEHOLDER, credentials: PLACEHOLDER, bio: PLACEHOLDER, price: PLACEHOLDER },
-  { role: 'Psychologist', category: 'Psychologist', accent: 'var(--color-khaki)', name: PLACEHOLDER, credentials: PLACEHOLDER, bio: PLACEHOLDER, price: PLACEHOLDER },
-  { role: 'Board President', category: 'Board President', accent: 'var(--color-eligible)', name: PLACEHOLDER, credentials: PLACEHOLDER, bio: PLACEHOLDER, price: PLACEHOLDER },
-  { role: 'English & Confidence Coach', category: 'English & Confidence', accent: 'var(--color-eligible)', name: PLACEHOLDER, credentials: PLACEHOLDER, bio: PLACEHOLDER, price: PLACEHOLDER, bonus: true },
 ];
 
 export const CONSULTATION_SLOTS = ['Today, 6:00 PM', 'Tomorrow, 11:00 AM', 'Tomorrow, 6:00 PM', 'Sat, 10:00 AM'];

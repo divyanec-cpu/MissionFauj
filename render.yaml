@@ -36,7 +36,11 @@ services:
       # in chat or commit it, same discipline as DATABASE_URL/JWT_SECRET.
       - key: ANTHROPIC_API_KEY
         sync: false
-      # Gates GET /admin/stats (HTTP Basic Auth). Render generates this —
-      # read it from the dashboard's Environment tab to view the dashboard.
-      - key: ADMIN_TOKEN
-        generateValue: true
+      # Bootstraps the first real /admin login (email+password, not a shared
+      # token) the first time the server boots with an empty AdminUser table.
+      # Pick your own values and set them directly in Render's dashboard —
+      # never generateValue, since you need to know them to log in.
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_BOOTSTRAP_PASSWORD
+        sync: false

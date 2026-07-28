@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppHeader } from '../components/layout/AppHeader';
 import { PillButton } from '../components/ui/PillButton';
 import { ExpertCard } from '../components/ExpertCard';
-import { EXPERTS, EXPERT_CATEGORIES, CONSULTATION_SLOTS, type Expert, type ExpertCategory } from '../data/experts';
+import { EXPERT_CATEGORIES, CONSULTATION_SLOTS, type Expert, type ExpertCategory } from '../data/experts';
+import { fetchExperts } from '../lib/contentApi';
 
 type View = 'list' | 'slot' | 'confirmed';
 
@@ -12,8 +13,16 @@ export function ExpertConsultationPage() {
   const [category, setCategory] = useState<'All' | ExpertCategory>('All');
   const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [experts, setExperts] = useState<Expert[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const filteredExperts = EXPERTS.filter((e) => category === 'All' || e.category === category);
+  useEffect(() => {
+    fetchExperts()
+      .then(setExperts)
+      .catch((err) => setLoadError(err instanceof Error ? err.message : 'Could not load experts.'));
+  }, []);
+
+  const filteredExperts = (experts ?? []).filter((e) => category === 'All' || e.category === category);
 
   const bookExpert = (expert: Expert) => {
     setSelectedExpert(expert);
@@ -67,6 +76,9 @@ export function ExpertConsultationPage() {
                 real board experience, alongside your self-review practice.
               </p>
             </div>
+
+            {loadError && <div className="text-[13px] text-not-eligible">{loadError}</div>}
+            {!experts && !loadError && <div className="text-[13px] text-muted">Loading experts…</div>}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredExperts.map((ex) => (

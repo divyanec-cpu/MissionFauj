@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { NDA_SUBJECTS } from '../../data/ndaChapters';
 import { MOCK_TESTS, type MockTest } from '../../data/mockQuestionBanks';
-import { DIGEST_POSTS } from '../../data/digestPosts';
+import type { DigestPost } from '../../data/digestPosts';
+import { fetchDigestPosts } from '../../lib/contentApi';
 import { CurrentAffairsDigest } from './CurrentAffairsDigest';
 
 // Real, tracked streak for this account — starts empty for a new sign-up;
@@ -22,6 +24,15 @@ interface NdaHubProps {
 
 export function NdaHub({ onOpenChapter, onOpenMockTest, unlocked, onOpenPricing }: NdaHubProps) {
   const mocks = MOCK_TESTS.filter((m) => m.exam === 'NDA');
+  const [digestPosts, setDigestPosts] = useState<DigestPost[]>([]);
+
+  useEffect(() => {
+    fetchDigestPosts()
+      .then(setDigestPosts)
+      .catch(() => {
+        /* the digest section shows its own "no briefs" state when empty */
+      });
+  }, []);
 
   return (
     <div className="grid grid-cols-1 items-start gap-7 lg:grid-cols-[1.6fr_1fr] animate-rise-in">
@@ -94,7 +105,7 @@ export function NdaHub({ onOpenChapter, onOpenMockTest, unlocked, onOpenPricing 
         </div>
 
         <div className="bg-bg-panel border border-border px-4.5 py-4">
-          <CurrentAffairsDigest posts={DIGEST_POSTS} unlocked={unlocked} onOpenPricing={onOpenPricing} />
+          <CurrentAffairsDigest posts={digestPosts} unlocked={unlocked} onOpenPricing={onOpenPricing} />
         </div>
       </div>
     </div>

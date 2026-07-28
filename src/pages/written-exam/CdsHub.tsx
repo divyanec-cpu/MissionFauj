@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CDS_TRACKS, getCdsSubjects, type CdsTrack } from '../../data/cdsSubjects';
 import { MOCK_TESTS, type MockTest } from '../../data/mockQuestionBanks';
-import { DIGEST_POSTS } from '../../data/digestPosts';
+import type { DigestPost } from '../../data/digestPosts';
+import { fetchDigestPosts } from '../../lib/contentApi';
 import { PillButton } from '../../components/ui/PillButton';
 import { CurrentAffairsDigest } from './CurrentAffairsDigest';
 
@@ -19,6 +20,15 @@ export function CdsHub({ onOpenMockTest, unlocked, onOpenPricing }: CdsHubProps)
     ...m,
     meta: m.name === 'Full-Length — Maths' && isOta ? 'Not applicable (OTA)' : m.meta,
   }));
+  const [digestPosts, setDigestPosts] = useState<DigestPost[]>([]);
+
+  useEffect(() => {
+    fetchDigestPosts()
+      .then(setDigestPosts)
+      .catch(() => {
+        /* the digest section shows its own "no briefs" state when empty */
+      });
+  }, []);
 
   return (
     <div className="flex flex-col gap-6.5 animate-rise-in">
@@ -68,7 +78,7 @@ export function CdsHub({ onOpenMockTest, unlocked, onOpenPricing }: CdsHubProps)
         </div>
       </div>
 
-      <CurrentAffairsDigest posts={DIGEST_POSTS} horizontal unlocked={unlocked} onOpenPricing={onOpenPricing} />
+      <CurrentAffairsDigest posts={digestPosts} horizontal unlocked={unlocked} onOpenPricing={onOpenPricing} />
     </div>
   );
 }

@@ -1,4 +1,6 @@
-import { getWrittenPricingPlans } from '../../data/pricingPlans';
+import { useEffect, useState } from 'react';
+import type { PricingPlan } from '../../data/pricingPlans';
+import { fetchPricingPlans } from '../../lib/contentApi';
 import { PricingCard } from '../../components/PricingCard';
 
 interface PricingPlansViewProps {
@@ -7,7 +9,14 @@ interface PricingPlansViewProps {
 }
 
 export function PricingPlansView({ exam, onStartTrial }: PricingPlansViewProps) {
-  const plans = getWrittenPricingPlans(exam);
+  const [plans, setPlans] = useState<PricingPlan[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchPricingPlans('written')
+      .then(setPlans)
+      .catch((err) => setLoadError(err instanceof Error ? err.message : 'Could not load pricing.'));
+  }, []);
 
   return (
     <div className="flex max-w-4xl flex-col gap-5.5 animate-rise-in">
@@ -18,6 +27,7 @@ export function PricingPlansView({ exam, onStartTrial }: PricingPlansViewProps) 
           Plans are scoped to {exam} — SSB pricing varies separately by entry scheme.
         </p>
       </div>
+      {loadError && <div className="text-[13px] text-not-eligible">{loadError}</div>}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {plans.map((plan) => (
           <PricingCard key={plan.name} plan={plan} />

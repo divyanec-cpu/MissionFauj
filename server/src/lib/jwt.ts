@@ -11,6 +11,11 @@ function secret(): string {
 // MissionFauj has no other authenticated backend surface to protect.
 const TOKEN_TTL = '20m';
 
+// The admin panel is the opposite case — a persistent login the owner
+// returns to across days, not a one-shot sign-up flow — so it gets its own,
+// much longer TTL.
+const ADMIN_TOKEN_TTL = '7d';
+
 export interface PhoneVerifiedPayload {
   kind: 'phone-verified';
   phone: string;
@@ -22,6 +27,12 @@ export interface AgeVerifiedPayload {
   phone: string;
   age: number;
   isMinor: boolean;
+}
+
+export interface AdminSessionPayload {
+  kind: 'admin-session';
+  adminId: string;
+  email: string;
 }
 
 export function signPhoneVerified(payload: Omit<PhoneVerifiedPayload, 'kind'>): string {
@@ -46,4 +57,16 @@ export function verifyAgeVerified(token: string): AgeVerifiedPayload {
     throw new Error('Invalid or expired token — go back and confirm your date of birth again.');
   }
   return decoded as unknown as AgeVerifiedPayload;
+}
+
+export function signAdminSession(payload: Omit<AdminSessionPayload, 'kind'>): string {
+  return jwt.sign({ ...payload, kind: 'admin-session' }, secret(), { expiresIn: ADMIN_TOKEN_TTL });
+}
+
+export function verifyAdminSession(token: string): AdminSessionPayload {
+  const decoded = jwt.verify(token, secret());
+  if (typeof decoded === 'string' || decoded.kind !== 'admin-session') {
+    throw new Error('Invalid or expired admin session.');
+  }
+  return decoded as unknown as AdminSessionPayload;
 }

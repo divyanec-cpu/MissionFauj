@@ -48,3 +48,100 @@ model AiUsageEvent {
 
   @@index([createdAt])
 }
+
+// A real admin login (email + scrypt-hashed password), replacing the old
+// shared ADMIN_TOKEN. Bootstrapped once at server startup from
+// ADMIN_EMAIL/ADMIN_BOOTSTRAP_PASSWORD if this table is empty — see index.ts.
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String // "scryptSaltHex:scryptHashHex"
+  createdAt    DateTime @default(now())
+}
+
+// Expert Consultation listings, admin-editable instead of hardcoded
+// placeholders in src/data/experts.ts.
+model Expert {
+  id          String   @id @default(cuid())
+  role        String
+  category    String // 'IO' | 'GTO' | 'Psychologist' | 'Board President' | 'English & Confidence'
+  accent      String // CSS var name, e.g. 'var(--color-amber)'
+  name        String
+  credentials String
+  bio         String
+  price       String
+  bonus       Boolean  @default(false)
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Current Affairs digest posts, admin-editable instead of a hand-edited
+// src/data/digestPosts.ts refreshed only via a code deploy.
+model DigestPost {
+  id         String   @id @default(cuid())
+  date       String // free-text display label, e.g. "Jul 24" — matches prior shape
+  title      String
+  detail     String
+  sourceName String
+  sourceUrl  String
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// Written-exam and SSB pricing plans. `priceValue` is only populated for the
+// 'ssb' scope, where the frontend needs a real number for the 20%
+// existing-member discount calculation; 'written' scope only ever displays
+// `price` as-is.
+model PricingPlan {
+  id          String   @id @default(cuid())
+  scope       String // 'written' | 'ssb'
+  name        String
+  price       String // display string, e.g. "₹499"
+  priceValue  Int?
+  period      String
+  highlighted Boolean  @default(false)
+  badge       String?
+  perks       Json // string[]
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// The 13-scheme eligibility criteria table, admin-editable instead of
+// src/data/eligibilityRules.ts. `id` is a stable human-meaningful slug
+// (e.g. "nda-army") set once at creation, not a cuid — it doubles as the
+// scheme's lookup key, matching how the original static file keyed these.
+model EligibilityRule {
+  id           String   @id
+  name         String
+  branch       String
+  ageMin       Float
+  ageMax       Float
+  education    String // '12th' | 'graduate'
+  requiresPCM  Boolean  @default(false)
+  pcmLabel     String?
+  marital      String // 'unmarried' | 'any'
+  requiresNCC  Boolean  @default(false)
+  failPriority Json // ordered string[] subset of ['pcm','education','age','marital','ncc'] — order is semantically meaningful, preserve as-is
+  okReason     String
+  active       Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// Mirrors AiUsageEvent exactly — aggregate subscription/trial adoption
+// signal only, nothing tied to a phone number.
+model SubscriptionEvent {
+  id        String   @id @default(cuid())
+  kind      String // 'written_trial' | 'written_subscribed' | 'ssb_trial' | 'ssb_subscribed'
+  exam      String? // 'NDA' | 'CDS' | 'AFCAT' — null for ssb kinds
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
