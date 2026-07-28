@@ -26,7 +26,7 @@ export function NameStep({ onSubmit }: NameStepProps) {
         What Should We Call You?
       </h1>
       <p className="max-w-lg text-base leading-relaxed text-muted">
-        Just your name — everything else about your account is already verified from sign-in.
+        Just your name for now — a couple of quick profile questions come next.
       </p>
       <div className="w-full max-w-sm">
         <input

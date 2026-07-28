@@ -1,46 +1,96 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppHeader } from '../../components/layout/AppHeader';
 import { Stepper } from '../../components/layout/Stepper';
+import { ProfileStep } from '../../components/ProfileStep';
 import { useAppState } from '../../context/AppStateContext';
+import { evaluateSchemes } from '../../lib/eligibilityEngine';
+import { fetchEligibilityRules } from '../../lib/contentApi';
+import { emptyProfileDraft, isProfileComplete, type CandidateProfile, type ProfileDraft } from '../../types/profile';
+import type { SchemeResult, SchemeRule } from '../../types/schemes';
 import type { CandidatePath } from '../../types/candidatePath';
 import { PathStep } from './steps/PathStep';
 import { NameStep } from './steps/NameStep';
-import { EligibilityPromptStep } from './steps/EligibilityPromptStep';
+import { ScanningStep } from '../eligibility/steps/ScanningStep';
+import { ReportStep } from '../eligibility/steps/ReportStep';
 
-type Step = 'path' | 'name' | 'eligibility-prompt';
+type Step = 'path' | 'name' | 'profile' | 'scanning' | 'report';
 
-const STEP_LABELS = ['Path', 'Name', 'Eligibility'];
+const STEP_LABELS = ['Path', 'Name', 'Profile', 'Result'];
 
 function activeIndexFor(step: Step): number {
   if (step === 'path') return 0;
   if (step === 'name') return 1;
-  return 2;
+  if (step === 'profile') return 2;
+  return 3; // scanning + report
 }
 
-// The one-time mandatory setup: just a name and "what brings you here" — the
-// detailed eligibility questionnaire lives at EligibilityCheckPage now,
-// reachable any time from the header, never a gate on prep content.
+// The one-time mandatory setup: path, name, and the full candidate profile
+// (age is already verified at sign-in; everything else — gender, marital
+// status, education, stream, NCC — is asked here so the eligibility scan
+// that follows is built from real answers, never assumed defaults. The scan
+// itself still never gates prep content — it's part of setup so it happens
+// once, up front, instead of being left as a skippable afterthought.
 export function OnboardingPage() {
   const appState = useAppState();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('path');
   const [path, setPath] = useState<CandidatePath | null>(null);
   const [name, setName] = useState<string | null>(null);
+  const [profile, setProfile] = useState<ProfileDraft>(emptyProfileDraft(appState.auth?.age ?? 18));
+  const [completedProfile, setCompletedProfile] = useState<CandidateProfile | null>(null);
+  const [results, setResults] = useState<SchemeResult[] | null>(null);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [rules, setRules] = useState<SchemeRule[]>([]);
+  const [rulesError, setRulesError] = useState<string | null>(null);
+  const scanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // completeSetup is deliberately NOT called here — writing candidateName to
-  // context would immediately flip RootGate from OnboardingPage to HomePage
-  // (it gates on candidateName alone), unmounting this component before the
-  // eligibility-prompt step ever gets a chance to render. Name/path are kept
-  // in local state until the candidate actually leaves onboarding below.
+  useEffect(() => {
+    fetchEligibilityRules()
+      .then(setRules)
+      .catch((err) => setRulesError(err instanceof Error ? err.message : 'Could not load eligibility rules.'));
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (scanTimer.current) clearTimeout(scanTimer.current);
+      if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    };
+  }, []);
+
+  // candidateName/candidatePath are deliberately NOT written to context until
+  // leaveOnboarding — writing candidateName would immediately flip RootGate
+  // from OnboardingPage to HomePage (it gates on candidateName alone),
+  // unmounting this component before the scan/report steps ever render.
   const finishSetup = (candidateName: string) => {
     setName(candidateName);
-    setStep('eligibility-prompt');
+    setStep('profile');
   };
 
-  const leaveOnboarding = (destination: string) => {
+  const runScan = () => {
+    if (!isProfileComplete(profile)) return;
+    setStep('scanning');
+    setScanProgress(0);
+    scanTimer.current = setTimeout(() => setScanProgress(100), 60);
+    advanceTimer.current = setTimeout(() => {
+      const computed = evaluateSchemes(profile, rules);
+      setResults(computed);
+      setCompletedProfile(profile);
+      setStep('report');
+    }, 1700);
+  };
+
+  const summaryLine = completedProfile
+    ? `Age ${completedProfile.age} · ${completedProfile.education}${
+        completedProfile.education.startsWith('Class 12') ? ' · ' + completedProfile.stream : ''
+      } · ${completedProfile.gender} · ${completedProfile.marital} · NCC: ${completedProfile.ncc}`
+    : '';
+
+  const leaveOnboarding = () => {
     appState.completeSetup(name!, path!);
-    navigate(destination);
+    appState.setProfileAndEligibility(completedProfile!, results!);
+    navigate('/');
   };
 
   return (
@@ -50,10 +100,19 @@ export function OnboardingPage() {
         <div className="w-full max-w-[920px]">
           {step === 'path' && <PathStep selected={path} onSelect={setPath} onContinue={() => setStep('name')} />}
           {step === 'name' && <NameStep onSubmit={finishSetup} />}
-          {step === 'eligibility-prompt' && (
-            <EligibilityPromptStep
-              onTakeTest={() => leaveOnboarding('/eligibility-check')}
-              onSkip={() => leaveOnboarding('/')}
+          {step === 'profile' && (
+            <ProfileStep profile={profile} onChange={(patch) => setProfile((prev) => ({ ...prev, ...patch }))} onSubmit={runScan} />
+          )}
+          {step === 'scanning' && <ScanningStep scanProgress={scanProgress} schemeNames={rules.map((r) => r.name)} />}
+          {rulesError && step === 'scanning' && <div className="mt-3 text-[13px] text-not-eligible">{rulesError}</div>}
+          {step === 'report' && results && (
+            <ReportStep
+              results={results}
+              summaryLine={summaryLine}
+              onRetake={() => setStep('profile')}
+              onContinue={leaveOnboarding}
+              retakeLabel="Redo Profile"
+              continueLabel="Enter MissionFauj →"
             />
           )}
         </div>

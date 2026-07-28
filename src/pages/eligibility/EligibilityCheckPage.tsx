@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppHeader } from '../../components/layout/AppHeader';
 import { Stepper } from '../../components/layout/Stepper';
+import { ProfileStep } from '../../components/ProfileStep';
 import { useAppState } from '../../context/AppStateContext';
 import { evaluateSchemes } from '../../lib/eligibilityEngine';
 import { fetchEligibilityRules } from '../../lib/contentApi';
-import { DEFAULT_PROFILE, type CandidateProfile } from '../../types/profile';
+import { emptyProfileDraft, isProfileComplete, type CandidateProfile, type ProfileDraft } from '../../types/profile';
 import type { SchemeResult, SchemeRule } from '../../types/schemes';
 import { BriefingStep } from './steps/BriefingStep';
-import { ProfileStep } from './steps/ProfileStep';
 import { ScanningStep } from './steps/ScanningStep';
 import { ReportStep } from './steps/ReportStep';
 import { PrepTeaserStep } from './steps/PrepTeaserStep';
@@ -30,7 +30,8 @@ function activeIndexFor(step: Step): number {
 export function EligibilityCheckPage() {
   const appState = useAppState();
   const [step, setStep] = useState<Step>('briefing');
-  const [profile, setProfile] = useState<CandidateProfile>(DEFAULT_PROFILE);
+  const [profile, setProfile] = useState<ProfileDraft>(emptyProfileDraft(appState.auth?.age ?? 18));
+  const [completedProfile, setCompletedProfile] = useState<CandidateProfile | null>(null);
   const [results, setResults] = useState<SchemeResult[] | null>(null);
   const [scanProgress, setScanProgress] = useState(0);
   const [rules, setRules] = useState<SchemeRule[]>([]);
@@ -43,10 +44,9 @@ export function EligibilityCheckPage() {
     // forcing the questionnaire again.
     if (appState.profile && appState.eligibilityResults) {
       setProfile(appState.profile);
+      setCompletedProfile(appState.profile);
       setResults(appState.eligibilityResults);
       setStep('report');
-    } else if (appState.auth) {
-      setProfile((prev) => ({ ...prev, age: appState.auth!.age }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -65,12 +65,14 @@ export function EligibilityCheckPage() {
   }, []);
 
   const runScan = () => {
+    if (!isProfileComplete(profile)) return;
     setStep('scanning');
     setScanProgress(0);
     scanTimer.current = setTimeout(() => setScanProgress(100), 60);
     advanceTimer.current = setTimeout(() => {
       const computed = evaluateSchemes(profile, rules);
       setResults(computed);
+      setCompletedProfile(profile);
       appState.setProfileAndEligibility(profile, computed);
       setStep('report');
     }, 1700);
@@ -78,15 +80,18 @@ export function EligibilityCheckPage() {
 
   const retakeBriefing = () => {
     appState.resetEligibilityCheck();
-    setProfile({ ...DEFAULT_PROFILE, age: appState.auth?.age ?? DEFAULT_PROFILE.age });
+    setProfile(emptyProfileDraft(appState.auth?.age ?? 18));
+    setCompletedProfile(null);
     setResults(null);
     setScanProgress(0);
     setStep('briefing');
   };
 
-  const summaryLine = `Age ${profile.age} · ${profile.education}${
-    profile.education.startsWith('Class 12') ? ' · ' + profile.stream : ''
-  } · ${profile.gender} · ${profile.marital} · NCC: ${profile.ncc}`;
+  const summaryLine = completedProfile
+    ? `Age ${completedProfile.age} · ${completedProfile.education}${
+        completedProfile.education.startsWith('Class 12') ? ' · ' + completedProfile.stream : ''
+      } · ${completedProfile.gender} · ${completedProfile.marital} · NCC: ${completedProfile.ncc}`
+    : '';
 
   return (
     <div className="texture-hatch flex min-h-screen flex-col">
@@ -102,6 +107,9 @@ export function EligibilityCheckPage() {
               profile={profile}
               onChange={(patch) => setProfile((prev) => ({ ...prev, ...patch }))}
               onSubmit={runScan}
+              kicker="Step 02"
+              title="Candidate Profile"
+              submitLabel="Run Eligibility Scan →"
             />
           )}
           {step === 'scanning' && <ScanningStep scanProgress={scanProgress} schemeNames={rules.map((r) => r.name)} />}

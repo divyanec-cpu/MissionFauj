@@ -18,11 +18,24 @@ export interface CandidateProfile {
   ncc: NccStatus;
 }
 
-export const DEFAULT_PROFILE: CandidateProfile = {
-  age: 18.5,
-  gender: 'Male',
-  marital: 'Unmarried',
-  education: 'Class 12 (appearing)',
-  stream: 'Science (PCM)',
-  ncc: 'None',
-};
+// While the profile is being collected, every field but age (verified at
+// sign-in) starts unset — nothing is pre-selected, so the candidate has to
+// actively answer each question rather than unknowingly accept a default.
+export interface ProfileDraft {
+  age: number;
+  gender: Gender | null;
+  marital: MaritalStatus | null;
+  education: EducationLevel | null;
+  stream: Stream | null;
+  ncc: NccStatus | null;
+}
+
+export function emptyProfileDraft(age: number): ProfileDraft {
+  return { age, gender: null, marital: null, education: null, stream: null, ncc: null };
+}
+
+export function isProfileComplete(draft: ProfileDraft): draft is CandidateProfile {
+  if (draft.gender === null || draft.marital === null || draft.education === null || draft.ncc === null) return false;
+  if (draft.education.startsWith('Class 12') && draft.stream === null) return false;
+  return true;
+}

@@ -6,9 +6,18 @@ interface ReportStepProps {
   summaryLine: string;
   onRetake: () => void;
   onContinue: () => void;
+  retakeLabel?: string;
+  continueLabel?: string;
 }
 
-export function ReportStep({ results, summaryLine, onRetake, onContinue }: ReportStepProps) {
+export function ReportStep({
+  results,
+  summaryLine,
+  onRetake,
+  onContinue,
+  retakeLabel = 'Retake Briefing',
+  continueLabel = 'Continue to Written-Exam Prep →',
+}: ReportStepProps) {
   const eligible = results.filter((r) => r.eligible);
   const notEligible = results.filter((r) => !r.eligible);
 
@@ -54,14 +63,14 @@ export function ReportStep({ results, summaryLine, onRetake, onContinue }: Repor
           onClick={onRetake}
           className="font-heading cursor-pointer border border-border bg-transparent px-6.5 py-3.5 text-sm font-semibold tracking-wide text-muted uppercase"
         >
-          Retake Briefing
+          {retakeLabel}
         </button>
         <button
           type="button"
           onClick={onContinue}
           className="font-heading clip-button cursor-pointer border-none bg-amber px-7.5 py-3.5 text-sm font-bold tracking-wide text-[#1b1500] uppercase"
         >
-          Continue to Written-Exam Prep →
+          {continueLabel}
         </button>
       </div>
 

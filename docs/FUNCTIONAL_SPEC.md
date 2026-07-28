@@ -26,30 +26,31 @@ A help drawer (FAQ groups: Login & OTP, Guardian Consent, Your Data & Privacy) i
 
 ## 3. Onboarding (`src/pages/onboarding/OnboardingPage.tsx`)
 
-Deliberately slim — a name and a single "what brings you here" choice, nothing else. The detailed eligibility questionnaire that used to live here has moved to its own optional tool (§5); nothing in onboarding gates access to prep content. Steps: `path → name → eligibility-prompt`.
+One-time mandatory setup: a "what brings you here" choice, a name, and the full candidate profile the eligibility engine needs — nothing about the candidate is ever assumed or defaulted. Steps: `path → name → profile → scanning → report`.
 
 - **Path** (`PathStep.tsx`): three cards — **School Student** (targeting NDA), **Graduate** (targeting CDS/AFCAT), **SSB Only** (already past the written exam). This choice drives which Written Exam Prep tabs a candidate sees (§6) — School sees NDA only, Graduate sees CDS+AFCAT, SSB Only sees all three (never hidden, just not the emphasized landing). Changeable any time from Home (§4) or Profile (§10).
-- **Name** (`NameStep.tsx`): one free-text field, validated with the same name pattern used for guardian names during login. First and only place a candidate's name is collected.
-- **Eligibility Prompt** (`EligibilityPromptStep.tsx`): "Check Your Eligibility?" with two equally-weighted actions — **Take the Test →** (goes to the Eligibility Check tool, §5) and **Skip for Now** (goes to Home, §4). Neither path is treated as more "correct" — this is a genuine offer, not a nag.
+- **Name** (`NameStep.tsx`): one free-text field, validated with the same name pattern used for guardian names during login.
+- **Profile** (shared `src/components/ProfileStep.tsx`): age is locked ("✓ Verified at sign-in", from the Login Sequence), everything else — gender, marital status, education level, 12th stream (conditional on education), NCC status — starts with **no option pre-selected**. Continue stays disabled until every required field has been actively answered (`isProfileComplete`, `src/types/profile.ts`); nothing renders as already-chosen for the candidate to unknowingly leave in place.
+- **Scanning / Report**: the same animated scan and per-scheme report used by the standalone Eligibility Check tool (§5), run automatically the moment Profile is submitted — real answers, not a placeholder run. "Redo Profile" goes back a step if something was mis-clicked; "Enter MissionFauj →" finishes setup.
 
-Name and path are only written to persisted state once the candidate actually leaves onboarding (Take Test or Skip) — not immediately after the Name step — since writing `candidateName` any earlier would flip `RootGate` straight to Home mid-flow, before the eligibility prompt ever gets a chance to render.
+`candidateName`, `candidatePath`, `profile`, and `eligibilityResults` are only written to persisted state together, once the candidate clicks through the final report screen — not at the Name or Profile step — since writing `candidateName` any earlier would flip `RootGate` straight to Home mid-flow, unmounting `OnboardingPage` before the scan/report steps ever render. The eligibility check computed here still never gates prep content (§6, §7) — collecting it during setup is about not assuming data, not about restricting access.
 
 ## 4. Home (`src/pages/HomePage.tsx`)
 
 The landing page once onboarding is done — ties the app's sections together, which nothing did before this existed.
 
 - Greeting using the candidate's name; a path-appropriate one-line description.
-- If the eligibility check hasn't been run yet: a persistent card inviting it (§5) — not a one-time dismissible nag, since the header link (§11) and this card are both always available.
+- If the eligibility check hasn't been run yet (only possible for accounts created before profile collection moved into onboarding): a persistent card inviting it (§5) — not a one-time dismissible nag, since the header link (§11) and this card are both always available.
 - A primary/secondary CTA pair for Written Exam Prep and SSB Training — School/Graduate emphasize Written Exam Prep, SSB Only emphasizes SSB Training. Both are always one tap away regardless of path.
 - An Expert Consultation link (§8) — previously only reachable from one deep link inside the SSB module hub.
 - A "Change Your Path" control — three pills, switches `candidatePath` immediately (same control also appears on Profile, §10).
 
 ## 5. Eligibility Check (`src/pages/eligibility/EligibilityCheckPage.tsx`)
 
-A standalone, optional self-check tool — reachable any time from the header (§11) or Home's nudge card (§4), never a gate on Written Exam Prep or SSB Training. Steps: `briefing → profile → scanning → report → prep`. Returning users with an existing result skip straight to `report`; "Retake Briefing" is always available.
+A standalone tool — reachable any time from the header (§11) or Home's nudge card (§4), never a gate on Written Exam Prep or SSB Training. The profile it needs is now collected once during onboarding (§3), so on first visit this page just shows that already-computed `report` — it exists here for **retaking** the scan later (status changed: cleared 12th, got an NCC certificate, etc.) and, as a fallback, for accounts created before profile collection moved into onboarding. Steps: `briefing → profile → scanning → report → prep`; "Retake Briefing" clears the stored profile/result and re-asks.
 
 - **Briefing**: what the scan covers.
-- **Profile**: age (locked, "✓ Verified at sign-in", from the Login Sequence — not re-editable), gender, marital status, education level, 12th stream (conditional on education), NCC status. This is the detailed questionnaire that used to be mandatory during onboarding.
+- **Profile** (shared `src/components/ProfileStep.tsx`, same component onboarding uses): age (locked, "✓ Verified at sign-in" — not re-editable), gender, marital status, education level, 12th stream (conditional on education), NCC status — no option pre-selected, same as at onboarding.
 - **Scanning**: animated scan against the 13-scheme eligibility table (fetched from the database at runtime, admin-editable at `/admin/eligibility-rules` — see Technical Brief §6 — not a static frontend file).
 - **Report**: per-scheme eligible/not-eligible cards with specific reasons (age/education/marital/NCC/stream), counts of eligible vs. not.
 - **Prep** (`PrepTeaserStep.tsx`): exam picker (NDA/CDS/AFCAT cards). Clicking "See {exam} Process & Timeline" opens a full **selection-process flowchart** (`ExamProcessTimeline.tsx` + `examTimelines.ts`) — notification → application → written exam → result → SSB/AFSB → medical → merit list → joining, with realistic month-level timing and a disclaimer to check official sites for exact current dates. Framed as useful for a parent to see too, not just the candidate.
