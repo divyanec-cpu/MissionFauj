@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import { usePersistedState } from '../lib/usePersistedState';
+import { migrateUnscopedKeys, readPersisted, usePersistedState } from '../lib/usePersistedState';
 import { trackSubscriptionEvent } from '../lib/contentApi';
 import type { CandidateProfile } from '../types/profile';
 import type { SchemeResult } from '../types/schemes';
@@ -41,22 +41,61 @@ interface AppStateValue {
 
 const AppStateContext = createContext<AppStateValue | null>(null);
 
+/**
+ * Everything except `auth` belongs to one specific candidate, so it is stored
+ * under a key scoped to their verified phone rather than in one flat bucket
+ * shared by whoever happens to hold the device. `auth` itself stays unscoped —
+ * it is the record of *who* is signed in, and it's what selects the scope.
+ *
+ * This is what lets sign-out be a plain logout that destroys nothing: the same
+ * candidate signing back in finds their own bucket untouched, while a different
+ * candidate signing in on the same device gets an empty one and can't see the
+ * previous person's name, path, profile or subscriptions.
+ *
+ * The phone is no more exposed here than it already is inside the stored `auth`
+ * value. Note this scopes data per candidate, it does not secure it — anything
+ * in localStorage is readable by anyone who can open devtools on the device.
+ * Real isolation needs the data to live server-side behind the session JWT.
+ */
+const PER_CANDIDATE_KEYS = [
+  'candidateName',
+  'candidatePath',
+  'profile',
+  'eligibilityResults',
+  'writtenSubscriptions',
+  'ssbSubscription',
+  'ssbRegistration',
+  'aiUsage',
+];
+
+function scopedKeyFor(phone: string | null) {
+  return (bare: string) => (phone ? `u:${phone}:${bare}` : `anon:${bare}`);
+}
+
+// Runs once on import, before the provider mounts and before any hook below
+// reads its bucket — deliberately not in a component, so React's StrictMode
+// double-render can't run it twice.
+const bootPhone = readPersisted<VerifiedAuth | null>('auth', null)?.candidatePhone ?? null;
+migrateUnscopedKeys(PER_CANDIDATE_KEYS, bootPhone ? scopedKeyFor(bootPhone) : null);
+
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = usePersistedState<VerifiedAuth | null>('auth', null);
-  const [candidateName, setCandidateName] = usePersistedState<string | null>('candidateName', null);
-  const [candidatePath, setCandidatePath] = usePersistedState<CandidatePath | null>('candidatePath', null);
-  const [profile, setProfile] = usePersistedState<CandidateProfile | null>('profile', null);
+  const key = scopedKeyFor(auth?.candidatePhone ?? null);
+
+  const [candidateName, setCandidateName] = usePersistedState<string | null>(key('candidateName'), null);
+  const [candidatePath, setCandidatePath] = usePersistedState<CandidatePath | null>(key('candidatePath'), null);
+  const [profile, setProfile] = usePersistedState<CandidateProfile | null>(key('profile'), null);
   const [eligibilityResults, setEligibilityResults] = usePersistedState<SchemeResult[] | null>(
-    'eligibilityResults',
+    key('eligibilityResults'),
     null,
   );
   const [writtenSubscriptions, setWrittenSubscriptions] = usePersistedState<WrittenSubscriptions>(
-    'writtenSubscriptions',
+    key('writtenSubscriptions'),
     DEFAULT_WRITTEN_SUBSCRIPTIONS,
   );
-  const [ssbSubscription, setSsbSubscription] = usePersistedState<SubscriptionState>('ssbSubscription', 'none');
-  const [ssbRegistration, setSsbRegistration] = usePersistedState<SsbRegistration | null>('ssbRegistration', null);
-  const [aiUsage, setAiUsage] = usePersistedState<AiUsage>('aiUsage', DEFAULT_AI_USAGE);
+  const [ssbSubscription, setSsbSubscription] = usePersistedState<SubscriptionState>(key('ssbSubscription'), 'none');
+  const [ssbRegistration, setSsbRegistration] = usePersistedState<SsbRegistration | null>(key('ssbRegistration'), null);
+  const [aiUsage, setAiUsage] = usePersistedState<AiUsage>(key('aiUsage'), DEFAULT_AI_USAGE);
 
   const value = useMemo<AppStateValue>(() => {
     const isExistingMember = Object.values(writtenSubscriptions).some((s) => s !== 'none');
@@ -73,11 +112,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       aiUsage,
       isExistingMember,
       completeLogin: (nextAuth) => setAuth(nextAuth),
-      // Just the login gate — profile, eligibility, and subscription state
-      // stay put, so logging back in with the same number picks up right
-      // where it left off. Login and onboarding/subscription data are
-      // separate gates; only the former resets here. candidateName/
-      // candidatePath survive sign-out for the same reason profile does.
+      // Clearing `auth` is the whole of sign-out, and it destroys nothing: it
+      // just stops selecting a scope (see PER_CANDIDATE_KEYS above), so the
+      // candidate's own data sits untouched in their bucket until they sign
+      // back in with the same number. Deleting it here would be the wrong fix
+      // for shared devices — the scoping already stops the next candidate
+      // seeing it, without costing this one their progress.
       signOut: () => setAuth(null),
       // Ends the one-time slim onboarding (name + path). Both are set
       // together since the onboarding flow only ever finishes as a unit —

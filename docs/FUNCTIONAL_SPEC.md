@@ -97,7 +97,7 @@ Accessible from every authenticated page via the header's "Profile" link. Shows:
 - **Account**: name, masked phone, age, minor/adult + guardian-consent status, guardian name/phone if applicable.
 - **Your Path**: current path (School/Graduate/SSB Only) with a description, and the same "Change Your Path" pill control Home (§4) has.
 - **Subscriptions**: per-track status badge (Not Started / Trial Active / Subscribed) for NDA/CDS/AFCAT written prep and SSB training, with a trial-start link where not yet started, and the existing-member discount note where relevant. Starting a trial also logs an aggregate event (exam/scope only, nothing tied to the candidate's phone) visible on the owner-only `/admin/stats` dashboard — same non-per-user-profile treatment as AI Assist usage, see §12.
-- **Sign Out**: logs out of this device; profile/eligibility/subscriptions/name/path are all kept (see Technical Brief §3 for the reasoning).
+- **Sign Out**: logs out of this device and deletes nothing. Progress is saved against the candidate's mobile number, so signing back in with it resumes exactly where they left off, while anyone signing in with a different number gets their own clean start and never sees the previous candidate's details. The copy states both halves of that guarantee (see Technical Brief §3–4).
 
 ## 11. Shared Header (`src/components/layout/AppHeader.tsx`)
 

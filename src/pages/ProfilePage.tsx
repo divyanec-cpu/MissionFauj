@@ -143,8 +143,9 @@ export function ProfilePage() {
             <div className="flex flex-col gap-2.5">
               <div className="font-heading font-semibold text-ink">Sign Out</div>
               <p className="text-[12px] text-muted">
-                Logs you out of this device. Your profile, eligibility report, and subscriptions are kept — signing
-                back in with the same mobile number picks up right where you left off.
+                Logs you out of this device. Nothing is deleted — your profile, eligibility report and subscriptions
+                stay saved against your mobile number, so signing back in with it picks up right where you left off.
+                Anyone signing in with a different number gets their own clean start and never sees your details.
               </p>
               <button
                 type="button"
