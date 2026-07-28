@@ -14,6 +14,21 @@ export const SRT_SITUATIONS = [
   'A stranger asks for help with something that will make you late. You…',
   'Your team member is visibly struggling but hasn\'t asked for help. You…',
   'You have to choose between two commitments scheduled at the same time. You…',
+  'You see a group of children playing dangerously close to a busy road. You…',
+  "Your team's project file is accidentally deleted the night before submission. You…",
+  'A junior asks you to falsify a report to meet a deadline. You…',
+  'You are stuck in a queue and notice someone collapse nearby. You…',
+  'Your vehicle breaks down in an unfamiliar area at night. You…',
+  'You overhear two colleagues planning to skip an important safety check. You…',
+  'A subordinate repeatedly ignores your instructions during a group task. You…',
+  'You are asked to lead a team of people older and more experienced than you. You…',
+  "You realise you've been given credit for a mistake that wasn't yours. You…",
+  'Heavy rain floods the only route to an important exam centre. You…',
+  "A teammate's personal problem is affecting the group's performance. You…",
+  'You must choose between helping a stranger and reaching an urgent appointment on time. You…',
+  'Your recommendation is publicly criticised by a senior in front of the group. You…',
+  'You discover a safety hazard that others have ignored for convenience. You…',
+  'Your team is credited for work that another team contributed significantly to. You…',
 ];
 
 export const SRT_OLQ_TAGS = ['Speed of Decision', 'Reasoning Ability', 'Sense of Responsibility', 'Courage'];
