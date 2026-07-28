@@ -2,6 +2,8 @@
 
 Exam-prep and SSB-training app for Indian defence-services aspirants (NDA, CDS, AFCAT, and other officer-entry schemes). React + TypeScript + Vite + Tailwind CSS, wrapped as an Android app via Capacitor.
 
+Full documentation: [`docs/TECHNICAL_BRIEF.md`](docs/TECHNICAL_BRIEF.md) (architecture, data model, why things are built the way they are) and [`docs/FUNCTIONAL_SPEC.md`](docs/FUNCTIONAL_SPEC.md) (screens, flows, content rules) — kept up to date as the app develops.
+
 ## Architecture
 
 - **Frontend** (this repo's `src/`): deployed to Vercel at [missionfauj.vercel.app](https://missionfauj.vercel.app). The Vercel↔GitHub connection is authorized, so pushing to `main` auto-deploys — `vercel --prod` also works for a manual deploy.
