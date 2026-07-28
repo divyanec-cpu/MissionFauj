@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { DigestPost } from '../../data/digestPosts';
 import { useAppState } from '../../context/AppStateContext';
-import { digestAssistReply } from '../../lib/aiAssist';
+import { askAi } from '../../lib/aiApi';
 import { AiAssistChat, type AiMessage } from '../../components/ai/AiAssistChat';
 
 interface CurrentAffairsDigestProps {
@@ -23,8 +23,10 @@ export function CurrentAffairsDigest({ posts, horizontal, unlocked, onOpenPricin
     setMessages([]);
   };
 
-  const ask = (q: string) => {
-    setMessages((prev) => [...prev, { q, a: digestAssistReply(q) }]);
+  const ask = async (q: string) => {
+    const context = openPost ? `${openPost.title} — ${openPost.detail}` : undefined;
+    const a = await askAi('digest', q, context);
+    setMessages((prev) => [...prev, { q, a }]);
     incrementAiUsage('digestAssist');
   };
 

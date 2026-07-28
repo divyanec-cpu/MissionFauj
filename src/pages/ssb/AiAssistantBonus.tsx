@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAppState } from '../../context/AppStateContext';
-import { ssbAssistantReply } from '../../lib/aiAssist';
+import { askAi } from '../../lib/aiApi';
 import { AiAssistChat, type AiMessage } from '../../components/ai/AiAssistChat';
 
 export function AiAssistantBonus({ onUnlock }: { onUnlock: () => void }) {
@@ -10,8 +10,9 @@ export function AiAssistantBonus({ onUnlock }: { onUnlock: () => void }) {
   const subscribed = ssbSubscription === 'subscribed';
   const limitReached = !subscribed && aiUsage.ssbAssistant >= 3;
 
-  const ask = (q: string) => {
-    setMessages((prev) => [...prev, { q, a: ssbAssistantReply(q) }]);
+  const ask = async (q: string) => {
+    const a = await askAi('ssb', q);
+    setMessages((prev) => [...prev, { q, a }]);
     incrementAiUsage('ssbAssistant');
   };
 

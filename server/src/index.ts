@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { authRouter } from './routes/auth.js';
+import { aiRouter } from './routes/ai.js';
 
 const app = express();
 app.use(cors());
@@ -10,6 +11,7 @@ app.use(express.json());
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 app.use('/auth', authRouter);
+app.use('/ai', aiRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
