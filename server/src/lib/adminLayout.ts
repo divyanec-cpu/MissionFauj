@@ -41,6 +41,7 @@ const NAV_ITEMS = [
   { href: '/admin/pricing-plans', label: 'Pricing' },
   { href: '/admin/eligibility-rules', label: 'Eligibility Rules' },
   { href: '/admin/admin-users', label: 'Admin Accounts' },
+  { href: '/admin/diagnostics', label: 'Diagnostics' },
 ];
 
 export function renderAdminPage(opts: { title: string; activePath?: string; body: string; loggedIn?: boolean }): string {

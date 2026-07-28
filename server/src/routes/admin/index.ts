@@ -10,6 +10,7 @@ import { digestPostsRouter } from './digestPosts.js';
 import { pricingPlansRouter } from './pricingPlans.js';
 import { eligibilityRulesRouter } from './eligibilityRules.js';
 import { adminUsersRouter } from './adminUsers.js';
+import { diagnosticsRouter } from './diagnostics.js';
 
 export const adminRouter = Router();
 
@@ -69,6 +70,7 @@ adminRouter.get('/', (req: AdminRequest, res) => {
       <a class="stat" href="/admin/pricing-plans" style="text-decoration:none;color:inherit"><div class="label">Pricing Plans</div></a>
       <a class="stat" href="/admin/eligibility-rules" style="text-decoration:none;color:inherit"><div class="label">Eligibility Rules</div></a>
       <a class="stat" href="/admin/admin-users" style="text-decoration:none;color:inherit"><div class="label">Admin Accounts</div></a>
+      <a class="stat" href="/admin/diagnostics" style="text-decoration:none;color:inherit"><div class="label">Diagnostics</div></a>
     </div>
   `;
   res.send(renderAdminPage({ title: 'Dashboard', activePath: '/admin', body: html }));
@@ -80,3 +82,4 @@ adminRouter.use('/digest-posts', digestPostsRouter);
 adminRouter.use('/pricing-plans', pricingPlansRouter);
 adminRouter.use('/eligibility-rules', eligibilityRulesRouter);
 adminRouter.use('/admin-users', adminUsersRouter);
+adminRouter.use('/diagnostics', diagnosticsRouter);
