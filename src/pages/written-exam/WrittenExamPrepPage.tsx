@@ -4,6 +4,7 @@ import { AppHeader } from '../../components/layout/AppHeader';
 import { PillButton } from '../../components/ui/PillButton';
 import { useAppState } from '../../context/AppStateContext';
 import type { WrittenExam } from '../../types/subscription';
+import { CANDIDATE_PATH_INFO } from '../../types/candidatePath';
 import type { MockTest } from '../../data/mockQuestionBanks';
 import { QUIZ_QUESTIONS } from '../../data/quizQuestions';
 import { NdaHub } from './NdaHub';
@@ -17,15 +18,6 @@ import { QuizRunner } from './QuizRunner';
 
 type View = 'hub' | 'chapter' | 'features' | 'pricing' | 'mock-test' | 'quiz';
 
-const NDA_SCHEME_IDS = ['nda-army', 'nda-navy', 'nda-af', 'naval-academy'];
-const CDS_SCHEME_IDS = ['cds-ima', 'cds-ina', 'cds-afa', 'cds-ota'];
-const AFCAT_SCHEME_IDS = ['afcat-flying', 'afcat-ground'];
-
-/** NDA's official joining age (16.5) is a hard eligibility fact and stays accurate in the
- * eligibility report — but aspirants commonly start written-exam prep years earlier, so prep
- * access opens from age 15 regardless of whether they'd be old enough to join today. */
-const MIN_NDA_PREP_AGE = 15;
-
 export function WrittenExamPrepPage() {
   const appState = useAppState();
   const [examTab, setExamTab] = useState<WrittenExam>('NDA');
@@ -33,38 +25,12 @@ export function WrittenExamPrepPage() {
   const [chapter, setChapter] = useState<{ subject: string; name: string } | null>(null);
   const [activeMockTest, setActiveMockTest] = useState<MockTest | null>(null);
 
-  if (!appState.eligibilityResults) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <AppHeader pageLabel="Written-Exam Prep" />
-        <main className="flex flex-1 flex-col gap-4 px-5 pt-14 sm:px-8 lg:px-14">
-          <div className="font-heading text-2xl font-bold uppercase">Complete the Eligibility Scan First</div>
-          <p className="max-w-md text-sm text-muted">
-            Written-exam prep is tailored to the schemes you're eligible for. Run the eligibility scan to unlock it.
-          </p>
-          <Link
-            to="/"
-            className="font-heading self-start border-none bg-amber px-6 py-3.5 text-sm font-bold tracking-wide text-[#1b1500] uppercase no-underline"
-          >
-            Go to Eligibility Scan →
-          </Link>
-        </main>
-      </div>
-    );
-  }
-
-  const eligibleIds = new Set(appState.eligibilityResults.filter((r) => r.eligible).map((r) => r.id));
-  const eligibleExams: WrittenExam[] = (['NDA', 'CDS', 'AFCAT'] as WrittenExam[]).filter((exam) => {
-    if (exam === 'NDA') {
-      const oldEnoughToPrep = (appState.profile?.age ?? 0) >= MIN_NDA_PREP_AGE;
-      return oldEnoughToPrep || NDA_SCHEME_IDS.some((id) => eligibleIds.has(id));
-    }
-    const ids = exam === 'CDS' ? CDS_SCHEME_IDS : AFCAT_SCHEME_IDS;
-    return ids.some((id) => eligibleIds.has(id));
-  });
-  const noEligibleExam = eligibleExams.length === 0;
-  const effectiveExam = eligibleExams.includes(examTab) ? examTab : eligibleExams[0];
-  const unlocked = effectiveExam ? appState.writtenSubscriptions[effectiveExam] !== 'none' : false;
+  // Which exams to show is driven purely by the candidate's chosen path
+  // (school/graduate/ssb-only) — never by the eligibility scan, which is an
+  // optional self-check tool, not a gate on prep content.
+  const pathExams = CANDIDATE_PATH_INFO[appState.candidatePath ?? 'ssb-only'].exams;
+  const effectiveExam = pathExams.includes(examTab) ? examTab : pathExams[0];
+  const unlocked = appState.writtenSubscriptions[effectiveExam] !== 'none';
 
   const backLabel =
     view === 'pricing' ? '← Back to App Overview' : view === 'features' ? `← Back to ${effectiveExam}` : `← Back to ${effectiveExam}`;
@@ -79,15 +45,15 @@ export function WrittenExamPrepPage() {
       <AppHeader
         pageLabel="Written-Exam Prep"
         right={
-          view === 'hub' && !noEligibleExam ? (
+          view === 'hub' ? (
             <div className="flex gap-2">
-              {eligibleExams.map((exam) => (
+              {pathExams.map((exam) => (
                 <PillButton key={exam} active={effectiveExam === exam} onClick={() => setExamTab(exam)}>
                   {exam}
                 </PillButton>
               ))}
             </div>
-          ) : view !== 'hub' ? (
+          ) : (
             <button
               type="button"
               onClick={goBack}
@@ -95,29 +61,13 @@ export function WrittenExamPrepPage() {
             >
               {backLabel}
             </button>
-          ) : null
+          )
         }
       />
       <main className="flex-1 px-5 pt-6 pb-16 sm:px-8 sm:pt-10 lg:px-14">
         {view === 'hub' && (
           <>
-            {noEligibleExam ? (
-              <div className="max-w-lg pt-10">
-                <div className="font-heading text-2xl font-bold uppercase">No Written-Exam Track Yet</div>
-                <p className="mt-3 text-muted">
-                  Your eligibility scan didn't match NDA, CDS or AFCAT. SSB practice stays open for every entry
-                  scheme regardless.
-                </p>
-                <Link
-                  to="/ssb-training"
-                  className="font-heading mt-5 inline-block border border-eligible px-5 py-3 text-sm font-semibold tracking-wide text-eligible uppercase no-underline"
-                >
-                  Enrol for SSB →
-                </Link>
-              </div>
-            ) : (
-              <>
-                {effectiveExam === 'NDA' && (
+            {effectiveExam === 'NDA' && (
                   <NdaHub
                     onOpenChapter={(subject, name) => {
                       setChapter({ subject, name });
@@ -177,8 +127,6 @@ export function WrittenExamPrepPage() {
                     See What MissionFauj Can Do →
                   </button>
                 </div>
-              </>
-            )}
           </>
         )}
 

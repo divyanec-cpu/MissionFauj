@@ -9,7 +9,10 @@ export function GlossaryPage() {
         pageLabel="Glossary"
         right={
           <div className="flex flex-wrap gap-2">
-            <Link to="/" className="border border-border px-2.5 py-1 text-[11px] text-muted no-underline hover:text-ink">
+            <Link
+              to="/eligibility-check"
+              className="border border-border px-2.5 py-1 text-[11px] text-muted no-underline hover:text-ink"
+            >
               Eligibility
             </Link>
             <Link
@@ -23,6 +26,12 @@ export function GlossaryPage() {
               className="border border-border px-2.5 py-1 text-[11px] text-muted no-underline hover:text-ink"
             >
               SSB Training
+            </Link>
+            <Link
+              to="/expert-consultation"
+              className="border border-border px-2.5 py-1 text-[11px] text-muted no-underline hover:text-ink"
+            >
+              Expert Consultation
             </Link>
           </div>
         }

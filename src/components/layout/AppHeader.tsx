@@ -19,6 +19,12 @@ export function AppHeader({ pageLabel, right }: AppHeaderProps) {
         <span className="text-[11px] uppercase tracking-wider text-muted">{pageLabel}</span>
         <div className="flex flex-none items-center gap-2">
           <Link
+            to="/eligibility-check"
+            className="border border-border px-2.5 py-1 text-[11px] text-muted no-underline hover:text-ink"
+          >
+            Eligibility Check
+          </Link>
+          <Link
             to="/help"
             className="border border-border px-2.5 py-1 text-[11px] text-muted no-underline hover:text-ink"
           >

@@ -1,9 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { AppHeader } from '../components/layout/AppHeader';
 import { ClipPanel } from '../components/ui/ClipPanel';
+import { PillButton } from '../components/ui/PillButton';
 import { Badge } from '../components/ui/Badge';
 import { useAppState } from '../context/AppStateContext';
 import type { SubscriptionState, WrittenExam } from '../types/subscription';
+import { CANDIDATE_PATH_INFO, type CandidatePath } from '../types/candidatePath';
+
+const PATH_ORDER: CandidatePath[] = ['school', 'graduate', 'ssb-only'];
 
 function maskPhone(phone: string) {
   return phone ? 'XXXXX' + phone.slice(-4) : '';
@@ -43,6 +47,12 @@ export function ProfilePage() {
           <div className="font-heading mb-3.5 text-sm font-bold tracking-wide text-amber uppercase">Account</div>
           <ClipPanel accent="amber">
             <div className="flex flex-col gap-3 text-sm">
+              {appState.candidateName && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted">Name</span>
+                  <span className="font-heading font-semibold text-ink">{appState.candidateName}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <span className="text-muted">Mobile Number</span>
                 <span className="font-heading font-semibold text-ink">+91 {maskPhone(auth.candidatePhone)}</span>
@@ -67,6 +77,27 @@ export function ProfilePage() {
             </div>
           </ClipPanel>
         </section>
+
+        {appState.candidatePath && (
+          <section>
+            <div className="font-heading mb-3.5 text-sm font-bold tracking-wide text-amber uppercase">Your Path</div>
+            <ClipPanel accent="steel">
+              <div className="flex flex-col gap-3">
+                <div className="text-sm">
+                  <span className="font-heading font-semibold text-ink">{CANDIDATE_PATH_INFO[appState.candidatePath].label}</span>
+                  <span className="ml-2 text-[12px] text-muted">{CANDIDATE_PATH_INFO[appState.candidatePath].description}</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {PATH_ORDER.map((p) => (
+                    <PillButton key={p} active={appState.candidatePath === p} onClick={() => appState.changePath(p)} size="sm">
+                      {CANDIDATE_PATH_INFO[p].label}
+                    </PillButton>
+                  ))}
+                </div>
+              </div>
+            </ClipPanel>
+          </section>
+        )}
 
         <section>
           <div className="font-heading mb-3.5 text-sm font-bold tracking-wide text-amber uppercase">
