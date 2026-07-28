@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { authRouter } from './routes/auth.js';
 import { aiRouter } from './routes/ai.js';
+import { adminRouter } from './routes/admin.js';
 
 const app = express();
 app.use(cors());
@@ -12,6 +13,7 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 
 app.use('/auth', authRouter);
 app.use('/ai', aiRouter);
+app.use('/admin', adminRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);

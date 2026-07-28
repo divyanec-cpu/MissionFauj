@@ -36,3 +36,15 @@ model ConsentRecord {
 
   @@index([candidatePhone])
 }
+
+// One row per successful AI Assist reply. Deliberately minimal — just enough
+// to see real adoption of the feature (volume, which surface) on the /admin
+// dashboard without storing the question text or tying it to a phone number,
+// since none of that is needed to answer "are people using this."
+model AiUsageEvent {
+  id        String   @id @default(cuid())
+  surface   String // 'ssb' | 'digest'
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

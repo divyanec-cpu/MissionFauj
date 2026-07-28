@@ -22,7 +22,7 @@ The first thing any new user sees — gates everything else (`App.tsx`'s `RootGa
    - **Under 18**: guardian's name + mobile → guardian's own OTP (independently verified — the guardian must prove their own phone, not just be named) → guardian consent screen (what the child logs, what stays private from the guardian, guardian's rights) → done.
 3. **Done** screen → "Continue to Eligibility Briefing" → Onboarding.
 
-A help drawer (FAQ groups: Login & OTP, Guardian Consent, Your Data & Privacy) is available throughout via a `?` icon.
+A help drawer (FAQ groups: Login & OTP, Guardian Consent, Your Data & Privacy) is available throughout via a `?` icon. Both consent screens and the "Your Data & Privacy" FAQ group disclose the site's cookieless, no-PII usage analytics (Plausible) alongside what's collected about the candidate specifically.
 
 ## 3. Onboarding & Eligibility (`src/pages/onboarding/OnboardingPage.tsx`)
 
@@ -81,6 +81,8 @@ Two surfaces share this component, both backed by a real call to Claude (`server
 - **Current Affairs Digest Assist** (`CurrentAffairsDigest.tsx`): answers questions about a specific news brief, with that brief's title/detail sent along as context so answers stay on-topic. Same 3-free/unlimited cap.
 
 Both surfaces show a "Thinking…" state while the request is in flight and an inline error message if the call fails (network issue or the assistant being temporarily unavailable) — a failed call doesn't count against the free-question cap. **Non-negotiable**: the backend's system prompt instructs the model to explain and coach only — it will not score, grade, or give a pass/fail verdict on a candidate's own WAT/TAT/SRT/PPDT/interview response even if the candidate pastes it in and asks to be scored. Only a human assessor (or Expert Consultation, §6) gives that kind of feedback.
+
+Each successful reply is logged server-side as an aggregate event (surface only — no phone number, no question or answer text) so real adoption of the feature is visible on the owner-only `/admin/stats` dashboard (see Technical Brief §6). Candidates never see this dashboard or know it exists beyond the general analytics disclosure in the login sequence's consent copy.
 
 ## 10. Shared Header (`src/components/layout/AppHeader.tsx`)
 

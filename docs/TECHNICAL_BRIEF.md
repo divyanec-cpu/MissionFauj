@@ -53,6 +53,7 @@ This is the most-iterated part of the codebase; the current shape is the result 
 **Backend** (Postgres via Prisma, `server/prisma/schema.prisma`):
 - `OtpSession` — phone (unique), reqId (client-reported, informational), purpose (`candidate`|`guardian`), timestamps. TTL-checked (15 min) for the verify-otp freshness gate.
 - `ConsentRecord` — candidatePhone, role (`self`|`guardian`), consentVersion, guardianName?, guardianPhone?, acceptedAt. Indexed on candidatePhone.
+- `AiUsageEvent` — surface (`ssb`|`digest`), createdAt. One row per successful AI Assist reply, logged from `server/src/routes/ai.ts`. Deliberately minimal (no phone, no question text) — it exists only to answer "is this feature actually being used," not to build a per-user profile.
 
 **Eligibility engine** (`src/lib/eligibilityEngine.ts` + `src/data/eligibilityRules.ts`): 13 entry schemes (NDA Army/Navy/Air Force, Naval Academy, CDS-IMA/INA/AFA/OTA, AFCAT Flying/Ground, TES, NCC Special Entry, Territorial Army) as a data table, not hardcoded per-scheme branches — `evaluateSchemes(profile, rules)` walks each rule's `failPriority` to produce the exact fail-reason shown. This is the intentional "admin-configurable" pattern since official age/education criteria change yearly.
 
@@ -65,14 +66,21 @@ This is the most-iterated part of the codebase; the current shape is the result 
 - **AI Assist is explanatory only**, never a scorer, in both the written-exam current-affairs context and the SSB context. Both surfaces (`src/pages/ssb/AiAssistantBonus.tsx`, `src/pages/written-exam/CurrentAffairsDigest.tsx`) call a real backend endpoint (`server/src/routes/ai.ts`, `POST /ai/ask`, Anthropic Claude API via `@anthropic-ai/sdk`) — the "never scores or verdicts psychology/interview answers" rule is enforced in the system prompt sent to the model, not just in client-side copy, so it holds even if a candidate pastes their own answer and asks to be scored. Requires a server-only `ANTHROPIC_API_KEY` (never a `VITE_` var — unlike MSG91's client-embeddable widget credentials, this is a true high-value secret).
 - **Exam timeline data** (`src/data/examTimelines.ts`) uses stable month-level/relative-duration patterns ("NDA I: ~April", "~2–3 months after result"), not exact calendar dates — those shift year to year and would go stale/misleading. A visible disclaimer points to the official UPSC/AFCAT sites for current dates.
 
-## 6. Known Issues / Open Items
+## 6. Real Usage Tracking
+
+Two separate mechanisms, deliberately kept independent — one for behavioral/adoption signal, one for account-level facts:
+
+- **Plausible analytics** (`index.html`, `<script defer data-domain="missionfauj.vercel.app" src="https://plausible.io/js/script.js">`) — cookieless, collects no personal data (aggregate page views/referrers/device type only), ignores `localhost` automatically. Chosen over more invasive tools (e.g. default-configured PostHog) specifically because this app's DPDP posture is load-bearing — a tool that captures no PII needs no additional consent-flow surgery beyond a one-line transparency note (added to the login sequence's consent copy and Data & Privacy FAQ). **The dashboard requires signing up at plausible.io for the `missionfauj.vercel.app` site** — not something that can be provisioned without a human creating that account.
+- **`/admin/stats`** (`server/src/routes/admin.ts`): a plain server-rendered HTML page behind HTTP Basic Auth (any username, password = `ADMIN_TOKEN`, compared with `crypto.timingSafeEqual`). Reports aggregate facts the analytics tool can't see because they live in Postgres: unique signups (distinct `candidatePhone` across `ConsentRecord`, split self vs. guardian-consented), signups per day (30d), total `AiUsageEvent` count, AI Assist replies per day (30d), and a breakdown by surface (`ssb` vs `digest`). Intentionally shows **no** phone numbers or chat content — aggregate counts only, consistent with the "no per-user profile" principle above. `ADMIN_TOKEN` is `generateValue: true` in `render.yaml` (Render mints it; read it from the dashboard's Environment tab) — same non-secret-in-chat discipline as `JWT_SECRET`/`ANTHROPIC_API_KEY`.
+
+## 7. Known Issues / Open Items
 
 - **MSG91 IP-blocking is unresolved as a root cause**, only architecturally routed around (client-side calls). If MSG91 ever blocks client-side widget calls too (e.g. by device/IP reputation rather than just datacenter ranges), this will need revisiting.
 - **Vercel↔GitHub auto-deploy**: confirmed working now, but the very first connection attempt failed silently (`Failed to connect divyanec-cpu/MissionFauj to project`) until GitHub access was manually granted — if this repo is ever transferred/renamed, expect to reconnect it.
 - **No real payment integration** — pricing/paywall screens are UI-state only (`startWrittenTrial`/`startSsbTrial` just flip local subscription state). Explicitly out of scope per the original brief.
 - **Expert Consultation** (`src/data/experts.ts`) uses explicit `"— to be added —"` placeholders for expert names/bios/pricing — intentional (CMS-editable-later pattern per the original brief), not a bug.
 
-## 7. Build/Deploy Commands Reference
+## 8. Build/Deploy Commands Reference
 
 ```bash
 # Frontend dev

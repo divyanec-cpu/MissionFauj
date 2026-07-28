@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
+import { prisma } from '../lib/prisma.js';
 
 export const aiRouter = Router();
 
@@ -54,6 +55,8 @@ aiRouter.post('/ask', async (req, res) => {
       messages: [{ role: 'user', content: userContent }],
     });
     const textBlock = message.content.find((block): block is Anthropic.TextBlock => block.type === 'text');
+    // Fire-and-forget: a logging hiccup shouldn't fail the actual answer.
+    prisma.aiUsageEvent.create({ data: { surface } }).catch((err) => console.error('Failed to log AI usage event', err));
     res.json({ answer: textBlock?.text ?? "Sorry, I couldn't come up with an answer to that — try rephrasing." });
   } catch (err) {
     console.error(err);

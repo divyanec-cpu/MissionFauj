@@ -36,3 +36,7 @@ services:
       # in chat or commit it, same discipline as DATABASE_URL/JWT_SECRET.
       - key: ANTHROPIC_API_KEY
         sync: false
+      # Gates GET /admin/stats (HTTP Basic Auth). Render generates this —
+      # read it from the dashboard's Environment tab to view the dashboard.
+      - key: ADMIN_TOKEN
+        generateValue: true

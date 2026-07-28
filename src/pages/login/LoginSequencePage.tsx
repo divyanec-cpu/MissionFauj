@@ -65,7 +65,7 @@ function PhoneField({
 const CONSENT_SECTIONS = [
   {
     title: 'What we collect',
-    body: 'Your profile (name, age, target exam), exam progress, and — only if you use it — your AI Assistant chat history.',
+    body: 'Your profile (name, age, target exam), exam progress, and — only if you use it — your AI Assistant chat history. Separately, we use privacy-first, cookieless site analytics (anonymous page-view counts only — no personal data, no cross-site tracking) to see which features are actually used.',
   },
   {
     title: 'How AI is used',
@@ -89,7 +89,7 @@ function guardianConsentSections(guardianName: string) {
     },
     {
       title: 'What your child logs',
-      body: 'Exam prep progress, SSB training module activity, and — if used — AI Assistant chat history.',
+      body: 'Exam prep progress, SSB training module activity, and — if used — AI Assistant chat history. We also use anonymous, cookieless site analytics (no personal data) to see which features are used.',
     },
     {
       title: 'What stays private to them',
@@ -155,6 +155,10 @@ const FAQ_GROUPS = [
       {
         q: 'Can I delete my data?',
         a: 'Yes, at any time from Help Center → Data & Privacy. Deletion is permanent.',
+      },
+      {
+        q: 'Do you track my usage for analytics?',
+        a: "We use a privacy-first analytics tool that only counts anonymous page views and feature usage — it doesn't use cookies, doesn't collect personal data, and can't identify you individually.",
       },
     ],
   },
