@@ -9,7 +9,7 @@ export function PpdtRunner({ onComplete }: { onComplete: () => void }) {
   const [phase, setPhase] = useState<Phase>('view');
   const [story, setStory] = useState('');
   const [notes, setNotes] = useState('');
-  const prompt = PPDT_PROMPTS[0];
+  const [prompt] = useState(() => PPDT_PROMPTS[Math.floor(Math.random() * PPDT_PROMPTS.length)]);
 
   const viewTime = useCountdown(30, 'view', () => setPhase('story'), phase === 'view');
   const storyTime = useCountdown(4 * 60, 'story', () => setPhase('discussion'), phase === 'story');
