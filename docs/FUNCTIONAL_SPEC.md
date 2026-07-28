@@ -38,7 +38,7 @@ Steps: `briefing → profile → scanning → report → prep`. Returning users 
 
 Tabs shown only for exams the eligibility scan cleared. Each exam has its own hub layout:
 
-- **NDA** (`NdaHub.tsx`): chapter accordion (Mathematics, GAT — English & GK), each chapter showing real (zeroed-until-tracked) completion %; a daily streak card; Mock Tests (Sectional Trigonometry, Full-Length Maths, Full-Length GAT); Current Affairs digest with per-post "Chat with AI Assist."
+- **NDA** (`NdaHub.tsx`): chapter accordion (Mathematics, GAT — English & GK), each chapter showing real (zeroed-until-tracked) completion %; a daily streak card; Mock Tests (Sectional Trigonometry, Full-Length Maths, Full-Length GAT); Current Affairs digest with per-post "Chat with AI Assist" (real Claude-backed answers, contextualized to the post — see §9).
 - **CDS** (`CdsHub.tsx`): track toggle (IMA/INA/AFA vs. OTA — OTA skips the Maths paper), subject list with completion %.
 - **AFCAT** (`AfcatHub.tsx`): dual AFCAT/EKT tracks with a branch picker (Mechanical/Computer Science/Electrical & Electronics) for the technical EKT paper.
 - **Shared**: `ChapterDetail.tsx` (definition/formulas/solved example — only Quadratic Equations has full authored content, others fall back to a generic note), `MockTestRunner.tsx` (per-question or overall timer, submit → score + right/wrong breakdown — real scoring, since this is objective content), `QuizRunner.tsx` (shorter, immediate feedback), `FeaturesOverview.tsx` → `PricingPlansView.tsx` (7-day trial CTA, no live payment).
@@ -53,7 +53,7 @@ Tabs shown only for exams the eligibility scan cleared. Each exam has its own hu
    - **Psychology**: TAT (30s view, 4 min write per image), WAT (15s/word, backspace/paste blocked — enforced, not just described), SRT (timed situation reactions), Self Description (5 fixed perspectives, timed).
    - **Group Testing**: PPDT (30s picture view + text narration/discussion, no recording), Lecturette (random topic, prep countdown + timed delivery notes), Group Tasks (GD/GPE-style text planning exercises).
    - **Interview & Self-Assessment**: PIQ & Interview Prep (scheme-tuned question bank), OLQ Self-Assessment (all 15 Officer-Like Qualities, self-reflection only).
-   - **Free bonus** (always open, any subscription state): English & Confidence study material, AI Assistant (3 free Q&A in trial, unlimited when subscribed).
+   - **Free bonus** (always open, any subscription state): English & Confidence study material, AI Assistant — real Claude-backed Q&A (3 free in trial, unlimited when subscribed), see §9.
 3. **Paywall** (`ModulePaywall.tsx`): skipped if already subscribed; shows the 20% existing-member discount automatically when a written-exam trial/subscription is active (`isExistingMember`, derived — not a manual toggle). `ModuleUnlocked.tsx` for the unlocked state.
 4. **Every exercise runner ends at `SelfReviewRubric`** — the OLQ tags relevant to that module, self-toggleable, plus free-text reflection. Never a score, never an AI verdict. This is the one rule enforced structurally across all seven runners.
 
@@ -73,6 +73,15 @@ Accessible from every authenticated page via the header's "Profile" link. Shows:
 - **Subscriptions**: per-track status badge (Not Started / Trial Active / Subscribed) for NDA/CDS/AFCAT written prep and SSB training, with a trial-start link where not yet started, and the existing-member discount note where relevant.
 - **Sign Out**: logs out of this device; profile/eligibility/subscriptions are kept (see Technical Brief §3 for the reasoning).
 
-## 9. Shared Header (`src/components/layout/AppHeader.tsx`)
+## 9. AI Assist (`src/components/ai/AiAssistChat.tsx`)
+
+Two surfaces share this component, both backed by a real call to Claude (`server/src/routes/ai.ts`, `POST /ai/ask`) rather than canned text:
+
+- **SSB Assistant** (`AiAssistantBonus.tsx`, free bonus module): explains OLQs, rubrics, and response structure for WAT/TAT/SRT/PPDT/interview prep. 3 free questions in trial, unlimited once subscribed.
+- **Current Affairs Digest Assist** (`CurrentAffairsDigest.tsx`): answers questions about a specific news brief, with that brief's title/detail sent along as context so answers stay on-topic. Same 3-free/unlimited cap.
+
+Both surfaces show a "Thinking…" state while the request is in flight and an inline error message if the call fails (network issue or the assistant being temporarily unavailable) — a failed call doesn't count against the free-question cap. **Non-negotiable**: the backend's system prompt instructs the model to explain and coach only — it will not score, grade, or give a pass/fail verdict on a candidate's own WAT/TAT/SRT/PPDT/interview response even if the candidate pastes it in and asks to be scored. Only a human assessor (or Expert Consultation, §6) gives that kind of feedback.
+
+## 10. Shared Header (`src/components/layout/AppHeader.tsx`)
 
 On every authenticated page: logo → page label → Help / Glossary / Profile links (grouped together so they wrap as one unit on narrow screens) → page-specific slot (e.g. the onboarding stepper, exam tabs).
