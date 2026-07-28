@@ -72,13 +72,23 @@ const PAGE_STYLE = `
 adminRouter.get('/stats', async (_req, res) => {
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-  const [allConsents, recentConsents, totalAiEvents, recentAiEvents, aiBySurface] = await Promise.all([
-    prisma.consentRecord.findMany({ select: { candidatePhone: true, role: true } }),
-    prisma.consentRecord.findMany({ where: { acceptedAt: { gte: since } }, select: { acceptedAt: true } }),
-    prisma.aiUsageEvent.count(),
-    prisma.aiUsageEvent.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } }),
-    prisma.aiUsageEvent.groupBy({ by: ['surface'], _count: { _all: true } }),
-  ]);
+  let allConsents, recentConsents, totalAiEvents, recentAiEvents, aiBySurface;
+  try {
+    [allConsents, recentConsents, totalAiEvents, recentAiEvents, aiBySurface] = await Promise.all([
+      prisma.consentRecord.findMany({ select: { candidatePhone: true, role: true } }),
+      prisma.consentRecord.findMany({ where: { acceptedAt: { gte: since } }, select: { acceptedAt: true } }),
+      prisma.aiUsageEvent.count(),
+      prisma.aiUsageEvent.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } }),
+      prisma.aiUsageEvent.groupBy({ by: ['surface'], _count: { _all: true } }),
+    ]);
+  } catch (err) {
+    // Most likely cause: the AiUsageEvent migration hasn't been deployed
+    // yet (see render.yaml's comment — migrations are a deliberate manual
+    // step, not automatic on deploy). Fail this one request, not the server.
+    console.error('Failed to load admin stats', err);
+    res.status(500).send('Could not load stats — check server logs (likely the AiUsageEvent migration hasn\'t been deployed yet).');
+    return;
+  }
 
   const uniqueUsers = new Set(allConsents.map((c) => c.candidatePhone)).size;
   const selfConsents = allConsents.filter((c) => c.role === 'self').length;
