@@ -6,10 +6,19 @@ function secret(): string {
   return s;
 }
 
-// Short-lived on purpose: these tokens only need to survive one sign-up
-// session (a few minutes across a handful of screens), never a return visit —
-// MissionFauj has no other authenticated backend surface to protect.
+// Short-lived on purpose: these tokens only carry a candidate through the
+// sign-up flow itself (a few minutes across a handful of screens). The
+// durable one issued at the end of that flow is CANDIDATE_SESSION_TTL below.
 const TOKEN_TTL = '20m';
+
+// The candidate's actual session, issued once consent is recorded and kept
+// client-side so their profile and entitlements can be synced on return
+// visits. Long by web standards because the alternative is making a student
+// re-verify by SMS every few days on their own phone, which costs real money
+// per message and trains people to expect OTP prompts. Expiry is not a
+// logout: the app keeps working from its local cache and simply stops
+// syncing, so a lapsed token degrades quietly instead of destroying access.
+const CANDIDATE_SESSION_TTL = '90d';
 
 // The admin panel is the opposite case — a persistent login the owner
 // returns to across days, not a one-shot sign-up flow — so it gets its own,
@@ -35,6 +44,11 @@ export interface AdminSessionPayload {
   email: string;
 }
 
+export interface CandidateSessionPayload {
+  kind: 'candidate-session';
+  phone: string;
+}
+
 export function signPhoneVerified(payload: Omit<PhoneVerifiedPayload, 'kind'>): string {
   return jwt.sign({ ...payload, kind: 'phone-verified' }, secret(), { expiresIn: TOKEN_TTL });
 }
@@ -57,6 +71,22 @@ export function verifyAgeVerified(token: string): AgeVerifiedPayload {
     throw new Error('Invalid or expired token — go back and confirm your date of birth again.');
   }
   return decoded as unknown as AgeVerifiedPayload;
+}
+
+// Carries the phone and nothing else: it identifies whose data to serve, and
+// every other attribute (age, minor status, guardian) is either already
+// recorded server-side or irrelevant to that decision. Keeping it minimal
+// means a leaked token discloses a phone number the holder already had.
+export function signCandidateSession(payload: Omit<CandidateSessionPayload, 'kind'>): string {
+  return jwt.sign({ ...payload, kind: 'candidate-session' }, secret(), { expiresIn: CANDIDATE_SESSION_TTL });
+}
+
+export function verifyCandidateSession(token: string): CandidateSessionPayload {
+  const decoded = jwt.verify(token, secret());
+  if (typeof decoded === 'string' || decoded.kind !== 'candidate-session') {
+    throw new Error('Invalid or expired session.');
+  }
+  return decoded as unknown as CandidateSessionPayload;
 }
 
 export function signAdminSession(payload: Omit<AdminSessionPayload, 'kind'>): string {

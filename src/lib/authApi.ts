@@ -63,11 +63,14 @@ export function confirmAge(token: string, dobDay: number, dobMonth: number, dobY
   });
 }
 
+// Returns the candidate's durable session token alongside the consent record —
+// this is the only point in the flow where the server has proven both who the
+// candidate is and that they have consented, so it's where the session begins.
 export function acceptConsent(payload: {
   ageToken: string;
   guardianToken?: string;
   guardianName?: string;
   consentVersion: string;
 }) {
-  return post<{ ok: true; id: string }>('/auth/consent', payload);
+  return post<{ ok: true; id: string; sessionToken?: string }>('/auth/consent', payload);
 }

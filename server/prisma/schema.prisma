@@ -145,3 +145,30 @@ model SubscriptionEvent {
 
   @@index([createdAt])
 }
+
+// Everything a candidate accumulates, keyed to their verified phone rather
+// than to the device holding it. Before this existed it all lived only in
+// localStorage, so a lost, wiped or reinstalled phone took a candidate's
+// subscription with it and there was nothing to restore from — which is also
+// why sign-out could not safely delete anything.
+//
+// Stored as JSON columns rather than normalised tables on purpose: the client
+// owns the shape of these blobs, none of it is queried or aggregated
+// server-side, and every past change to them has been a frontend type change.
+// Normalising would mean a migration each time for no query benefit. The
+// aggregate reporting on /admin/stats deliberately reads the separate
+// SubscriptionEvent/AiUsageEvent tables instead, so nothing here is joined.
+model CandidateState {
+  id                   String   @id @default(cuid())
+  candidatePhone       String   @unique
+  candidateName        String?
+  candidatePath        String? // 'school' | 'graduate' | 'ssb-only'
+  profile              Json?
+  eligibilityResults   Json?
+  writtenSubscriptions Json?
+  ssbSubscription      String?
+  ssbRegistration      Json?
+  aiUsage              Json?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}

@@ -7,6 +7,7 @@ import { authRouter } from './routes/auth.js';
 import { aiRouter } from './routes/ai.js';
 import { adminRouter } from './routes/admin/index.js';
 import { contentRouter } from './routes/content.js';
+import { meRouter } from './routes/me.js';
 
 const app = express();
 // Render terminates TLS at a proxy in front of this app — without this,
@@ -22,6 +23,7 @@ app.use('/auth', authRouter);
 app.use('/ai', aiRouter);
 app.use('/admin', adminRouter);
 app.use('/content', contentRouter);
+app.use('/me', meRouter);
 
 // One-time bootstrap: if no admin account exists yet and both env vars are
 // set, create the first one. Idempotent (only fires while the table is
@@ -38,6 +40,19 @@ async function bootstrapAdmin() {
 bootstrapAdmin().catch((err) => console.error('Admin bootstrap failed', err));
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  // body-parser rejects oversized and malformed bodies before any route runs,
+  // so without this they'd surface as a 500 — telling the caller the server
+  // broke when in fact their request was refused, and burying it in the error
+  // log alongside genuine faults.
+  const type = (err as { type?: string } | null)?.type;
+  if (type === 'entity.too.large') {
+    res.status(413).json({ error: 'That request was too large.' });
+    return;
+  }
+  if (type === 'entity.parse.failed') {
+    res.status(400).json({ error: 'That request body was not valid JSON.' });
+    return;
+  }
   console.error(err);
   res.status(500).json({ error: 'Internal server error' });
 });

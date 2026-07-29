@@ -370,12 +370,13 @@ export function LoginSequencePage({ onDone }: LoginSequenceProps) {
     setConsenting(true);
     setConsentError('');
     try {
-      await acceptConsent({ ageToken, consentVersion: CONSENT_VERSION });
+      const { sessionToken } = await acceptConsent({ ageToken, consentVersion: CONSENT_VERSION });
       pendingAuthRef.current = {
         candidatePhone: phone,
         age: age ?? 0,
         isMinor: false,
         consentAcceptedAt: new Date().toISOString(),
+        sessionToken,
       };
       setStep('done');
     } catch (err) {
@@ -459,7 +460,7 @@ export function LoginSequencePage({ onDone }: LoginSequenceProps) {
     setConsenting(true);
     setConsentError('');
     try {
-      await acceptConsent({
+      const { sessionToken } = await acceptConsent({
         ageToken,
         guardianToken,
         guardianName: guardianName.trim(),
@@ -472,6 +473,7 @@ export function LoginSequencePage({ onDone }: LoginSequenceProps) {
         guardianName: guardianName.trim(),
         guardianPhone,
         consentAcceptedAt: new Date().toISOString(),
+        sessionToken,
       };
       setStep('done');
     } catch (err) {

@@ -2,7 +2,13 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { calendarAge, parseDob } from '../lib/age.js';
-import { signAgeVerified, signPhoneVerified, verifyAgeVerified, verifyPhoneVerified } from '../lib/jwt.js';
+import {
+  signAgeVerified,
+  signCandidateSession,
+  signPhoneVerified,
+  verifyAgeVerified,
+  verifyPhoneVerified,
+} from '../lib/jwt.js';
 import { byIp, byPhone, rateLimit } from '../lib/rateLimit.js';
 import { assertOtpVerifiedWithMsg91, isVerificationEnforced, Msg91VerificationError } from '../lib/msg91.js';
 
@@ -249,7 +255,7 @@ authRouter.post('/consent', async (req, res) => {
         guardianPhone: guardianVerified.phone,
       },
     });
-    res.json({ ok: true, id: record.id });
+    res.json({ ok: true, id: record.id, sessionToken: signCandidateSession({ phone: ageVerified.phone }) });
     return;
   }
 
@@ -260,5 +266,5 @@ authRouter.post('/consent', async (req, res) => {
       consentVersion: body.data.consentVersion,
     },
   });
-  res.json({ ok: true, id: record.id });
+  res.json({ ok: true, id: record.id, sessionToken: signCandidateSession({ phone: ageVerified.phone }) });
 });

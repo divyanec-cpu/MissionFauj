@@ -1,6 +1,7 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { migrateUnscopedKeys, readPersisted, usePersistedState } from '../lib/usePersistedState';
 import { trackSubscriptionEvent } from '../lib/contentApi';
+import { fetchRemoteState, pushRemoteState } from '../lib/stateApi';
 import type { CandidateProfile } from '../types/profile';
 import type { SchemeResult } from '../types/schemes';
 import type { AiUsage, SsbRegistration, SubscriptionState, WrittenExam } from '../types/subscription';
@@ -96,6 +97,127 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [ssbSubscription, setSsbSubscription] = usePersistedState<SubscriptionState>(key('ssbSubscription'), 'none');
   const [ssbRegistration, setSsbRegistration] = usePersistedState<SsbRegistration | null>(key('ssbRegistration'), null);
   const [aiUsage, setAiUsage] = usePersistedState<AiUsage>(key('aiUsage'), DEFAULT_AI_USAGE);
+
+  // ---------------------------------------------------------------------
+  // Sync with the server, so a candidate's profile and entitlements survive
+  // losing, wiping or replacing the device. localStorage stays the working
+  // copy — the app must remain fully usable offline and on a sleeping free-tier
+  // backend — and the server is the durable one, consulted at sign-in.
+  // ---------------------------------------------------------------------
+  const sessionToken = auth?.sessionToken;
+  // Which token we have finished hydrating for. Pushes are refused until this
+  // matches, so a fresh device can never overwrite stored state with its empty
+  // one before it has looked at what the server holds.
+  const hydratedForToken = useRef<string | null>(null);
+  const lastPushed = useRef<string | null>(null);
+
+  const syncPayload = useMemo(
+    () => ({
+      candidateName,
+      candidatePath,
+      profile,
+      eligibilityResults,
+      writtenSubscriptions,
+      ssbSubscription,
+      ssbRegistration,
+      aiUsage,
+    }),
+    [candidateName, candidatePath, profile, eligibilityResults, writtenSubscriptions, ssbSubscription, ssbRegistration, aiUsage],
+  );
+  const serializedPayload = JSON.stringify(syncPayload);
+
+  useEffect(() => {
+    if (!sessionToken || hydratedForToken.current === sessionToken) return;
+    let cancelled = false;
+
+    fetchRemoteState(sessionToken)
+      .then((remote) => {
+        if (cancelled) return;
+        if (remote) {
+          // The server has this candidate on record: adopt it wholesale. This
+          // is the moment a reinstalled phone gets its subscription back.
+          const nextName = typeof remote.candidateName === 'string' ? remote.candidateName : null;
+          const nextPath =
+            remote.candidatePath === 'school' || remote.candidatePath === 'graduate' || remote.candidatePath === 'ssb-only'
+              ? remote.candidatePath
+              : null;
+          const nextWritten =
+            remote.writtenSubscriptions && typeof remote.writtenSubscriptions === 'object'
+              ? { ...DEFAULT_WRITTEN_SUBSCRIPTIONS, ...(remote.writtenSubscriptions as WrittenSubscriptions) }
+              : DEFAULT_WRITTEN_SUBSCRIPTIONS;
+          const nextSsb = typeof remote.ssbSubscription === 'string' ? (remote.ssbSubscription as SubscriptionState) : 'none';
+          const nextAiUsage =
+            remote.aiUsage && typeof remote.aiUsage === 'object'
+              ? { ...DEFAULT_AI_USAGE, ...(remote.aiUsage as AiUsage) }
+              : DEFAULT_AI_USAGE;
+
+          setCandidateName(nextName);
+          setCandidatePath(nextPath);
+          setProfile((remote.profile ?? null) as CandidateProfile | null);
+          setEligibilityResults((remote.eligibilityResults ?? null) as SchemeResult[] | null);
+          setWrittenSubscriptions(nextWritten);
+          setSsbSubscription(nextSsb);
+          setSsbRegistration((remote.ssbRegistration ?? null) as SsbRegistration | null);
+          setAiUsage(nextAiUsage);
+
+          // Record what we just adopted so the state change we caused doesn't
+          // immediately echo back up as a redundant write.
+          lastPushed.current = JSON.stringify({
+            candidateName: nextName,
+            candidatePath: nextPath,
+            profile: (remote.profile ?? null) as CandidateProfile | null,
+            eligibilityResults: (remote.eligibilityResults ?? null) as SchemeResult[] | null,
+            writtenSubscriptions: nextWritten,
+            ssbSubscription: nextSsb,
+            ssbRegistration: (remote.ssbRegistration ?? null) as SsbRegistration | null,
+            aiUsage: nextAiUsage,
+          });
+        } else {
+          // Nothing stored for this number yet — every candidate from before
+          // syncing existed lands here, so their device is the source of truth
+          // exactly once and gets uploaded rather than wiped.
+          lastPushed.current = null;
+        }
+        hydratedForToken.current = sessionToken;
+      })
+      .catch(() => {
+        // Offline, backend asleep, or session expired. Deliberately leaves
+        // hydratedForToken unset so nothing is pushed: the app keeps running on
+        // local state, and syncing resumes on a later successful sign-in.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    sessionToken,
+    setCandidateName,
+    setCandidatePath,
+    setProfile,
+    setEligibilityResults,
+    setWrittenSubscriptions,
+    setSsbSubscription,
+    setSsbRegistration,
+    setAiUsage,
+  ]);
+
+  useEffect(() => {
+    if (!sessionToken || hydratedForToken.current !== sessionToken) return;
+    if (lastPushed.current === serializedPayload) return;
+    // Debounced: pill taps and trial starts arrive in bursts, and each one
+    // would otherwise be its own request.
+    const timer = setTimeout(() => {
+      pushRemoteState(sessionToken, syncPayload)
+        .then(() => {
+          lastPushed.current = serializedPayload;
+        })
+        .catch(() => {
+          // Left unrecorded so the next change retries; a failed sync must
+          // never surface as an error to someone mid-exercise.
+        });
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [sessionToken, serializedPayload, syncPayload]);
 
   const value = useMemo<AppStateValue>(() => {
     const isExistingMember = Object.values(writtenSubscriptions).some((s) => s !== 'none');
