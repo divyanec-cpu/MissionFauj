@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { migrateUnscopedKeys, readPersisted, usePersistedState } from '../lib/usePersistedState';
 import { trackSubscriptionEvent } from '../lib/contentApi';
 import { fetchRemoteState, pushRemoteState } from '../lib/stateApi';
@@ -108,7 +108,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   // Which token we have finished hydrating for. Pushes are refused until this
   // matches, so a fresh device can never overwrite stored state with its empty
   // one before it has looked at what the server holds.
-  const hydratedForToken = useRef<string | null>(null);
+  //
+  // Deliberately state and not a ref: a ref was the first attempt and silently
+  // broke syncing outright. Hydration finishes inside a promise callback, and
+  // mutating a ref there re-renders nothing, so the push effect — which had
+  // already run once and bailed because hydration was incomplete — never ran
+  // again and nothing was ever uploaded. It typechecked and looked right.
+  const [hydratedToken, setHydratedToken] = useState<string | null>(null);
   const lastPushed = useRef<string | null>(null);
 
   const syncPayload = useMemo(
@@ -127,7 +133,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const serializedPayload = JSON.stringify(syncPayload);
 
   useEffect(() => {
-    if (!sessionToken || hydratedForToken.current === sessionToken) return;
+    if (!sessionToken || hydratedToken === sessionToken) return;
     let cancelled = false;
 
     fetchRemoteState(sessionToken)
@@ -178,11 +184,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           // exactly once and gets uploaded rather than wiped.
           lastPushed.current = null;
         }
-        hydratedForToken.current = sessionToken;
+        setHydratedToken(sessionToken);
       })
       .catch(() => {
         // Offline, backend asleep, or session expired. Deliberately leaves
-        // hydratedForToken unset so nothing is pushed: the app keeps running on
+        // hydratedToken unset so nothing is pushed: the app keeps running on
         // local state, and syncing resumes on a later successful sign-in.
       });
 
@@ -191,6 +197,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     };
   }, [
     sessionToken,
+    hydratedToken,
     setCandidateName,
     setCandidatePath,
     setProfile,
@@ -202,7 +209,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   ]);
 
   useEffect(() => {
-    if (!sessionToken || hydratedForToken.current !== sessionToken) return;
+    if (!sessionToken || hydratedToken !== sessionToken) return;
     if (lastPushed.current === serializedPayload) return;
     // Debounced: pill taps and trial starts arrive in bursts, and each one
     // would otherwise be its own request.
@@ -217,7 +224,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         });
     }, 1200);
     return () => clearTimeout(timer);
-  }, [sessionToken, serializedPayload, syncPayload]);
+  }, [sessionToken, hydratedToken, serializedPayload, syncPayload]);
 
   const value = useMemo<AppStateValue>(() => {
     const isExistingMember = Object.values(writtenSubscriptions).some((s) => s !== 'none');
