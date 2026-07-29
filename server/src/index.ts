@@ -42,5 +42,10 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
   res.status(500).json({ error: 'Internal server error' });
 });
 
-const port = Number(process.env.PORT) || 4000;
+// Render injects PORT in production. The local fallback is 4010 rather than
+// the conventional 4000 because another project on the same dev machine
+// claims 4000 — and the failure mode is genuinely misleading rather than
+// loud: the other app answers /health, so the server looks up while every
+// MissionFauj route returns 404.
+const port = Number(process.env.PORT) || 4010;
 app.listen(port, () => console.log(`MissionFauj API listening on :${port}`));

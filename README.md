@@ -25,10 +25,16 @@ npm run dev          # frontend, http://localhost:5173
 
 cd server
 npm install
-npm run dev          # backend, http://localhost:4000
+npm run dev          # backend, http://localhost:4010
 ```
 
 Copy `.env.example` → `.env` (root) and `server/.env.example` → `server/.env`, filling in real values (MSG91 widget credentials, local Postgres connection string).
+
+The backend uses port **4010**, not 4000, because another project on the same
+machine claims 4000. Worth knowing because the collision fails misleadingly
+rather than loudly: the other app answers `/health`, so the server looks
+healthy while every MissionFauj route 404s. If you see that, check what is
+actually listening on the port before assuming a stale build.
 
 ## Building the Android APK
 
