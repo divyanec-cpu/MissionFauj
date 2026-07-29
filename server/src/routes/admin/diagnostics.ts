@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { renderAdminPage, escapeHtml } from '../../lib/adminLayout.js';
+import { isVerificationEnforced } from '../../lib/msg91.js';
 
 export const diagnosticsRouter = Router();
 
@@ -89,6 +90,9 @@ async function probeMsg91(): Promise<ProbeResult> {
 }
 
 diagnosticsRouter.get('/', (_req, res) => {
+  const enforced = isVerificationEnforced();
+  const tone = enforced ? '#7a8b4f' : '#9c5b3c';
+
   res.send(
     renderAdminPage({
       title: 'Diagnostics',
@@ -96,6 +100,25 @@ diagnosticsRouter.get('/', (_req, res) => {
       body: `
         <h1>Diagnostics</h1>
         <p class="muted">Connectivity checks that can only be answered from the deployed server.</p>
+
+        <h2>OTP verification mode</h2>
+        <div class="card" style="max-width:720px;border-left:4px solid ${tone}">
+          <div style="font-size:1.15rem;font-weight:700;color:${tone}">
+            ${enforced ? 'ENFORCED — codes are verified with MSG91' : 'NOT ENFORCED — the sign-in gate is forgeable'}
+          </div>
+          ${
+            enforced
+              ? `<p>Every sign-in re-checks MSG91's access token server-side and requires it to belong to the number
+                 being claimed. A caller cannot obtain a token for a number they do not control.</p>`
+              : `<p><strong>MSG91_AUTH_KEY is not set on this server.</strong> Sign-in currently accepts the client's
+                 word that the code was verified, so anyone able to send two HTTP requests can obtain a token for any
+                 phone number, without an SMS ever being sent. That permits forged consent records and inflates the
+                 signup count on Stats.</p>
+                 <p class="muted" style="font-size:0.85rem">Set <code>MSG91_AUTH_KEY</code> (your MSG91 account authkey,
+                 not the widget credentials) in this service's environment and redeploy. No code change is needed —
+                 enforcement switches on as soon as the key is present.</p>`
+          }
+        </div>
 
         <h2>MSG91 reachability</h2>
         <div class="card" style="max-width:720px">

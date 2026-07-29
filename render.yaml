@@ -36,6 +36,12 @@ services:
       # in chat or commit it, same discipline as DATABASE_URL/JWT_SECRET.
       - key: ANTHROPIC_API_KEY
         sync: false
+      # MSG91 account authkey (server-only, NOT the widget credentials, which
+      # are client-side VITE_ vars). Enables server-side verification of the
+      # OTP access token in /auth/verify-otp. Until it is set the sign-in gate
+      # is forgeable — see /admin/diagnostics, which reports the live mode.
+      - key: MSG91_AUTH_KEY
+        sync: false
       # Bootstraps the first real /admin login (email+password, not a shared
       # token) the first time the server boots with an empty AdminUser table.
       # Pick your own values and set them directly in Render's dashboard —

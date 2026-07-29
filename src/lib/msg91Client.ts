@@ -75,8 +75,21 @@ export async function resendOtpClient(reqId: string, retryChannel: 'text' | 'voi
   if (data.type !== 'success') throw new Msg91ClientError(extractError(data));
 }
 
-export async function verifyOtpClient(reqId: string, otp: string): Promise<void> {
+/**
+ * Returns MSG91's access token for the completed verification, which the
+ * backend re-checks with MSG91 to confirm this code really was verified for
+ * this number (see server/src/lib/msg91.ts). Following the same pattern as
+ * sendOtp's reqId, MSG91 returns it in `message`.
+ *
+ * Returns null rather than throwing if no token can be found in a successful
+ * response: the verification itself did succeed, and it's the backend's job to
+ * decide whether a missing token is fatal — which it is whenever server-side
+ * enforcement is switched on.
+ */
+export async function verifyOtpClient(reqId: string, otp: string): Promise<string | null> {
   const { widgetId, tokenAuth } = creds();
   const data = await post('/verifyOtp', { widgetId, tokenAuth, reqId, otp });
   if (data.type !== 'success') throw new Msg91ClientError(extractError(data));
+  const accessToken = data['access-token'] ?? (data.data as Record<string, unknown> | undefined)?.accessToken ?? data.message;
+  return typeof accessToken === 'string' && accessToken.length > 0 ? accessToken : null;
 }

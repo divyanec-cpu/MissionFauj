@@ -330,8 +330,8 @@ export function LoginSequencePage({ onDone }: LoginSequenceProps) {
     verifyingRef.current = true;
     setVerifyingOtp(true);
     try {
-      await verifyOtpClient(reqId, otp);
-      const { token } = await verifyOtp(phone, 'candidate');
+      const accessToken = await verifyOtpClient(reqId, otp);
+      const { token } = await verifyOtp(phone, 'candidate', accessToken);
       if (resendInterval.current) clearInterval(resendInterval.current);
       setCandidateToken(token);
       setStep('dob');
@@ -439,8 +439,8 @@ export function LoginSequencePage({ onDone }: LoginSequenceProps) {
     guardianVerifyingRef.current = true;
     setGuardianVerifyingOtp(true);
     try {
-      await verifyOtpClient(guardianReqId, guardianOtp);
-      const { token } = await verifyOtp(guardianPhone, 'guardian');
+      const accessToken = await verifyOtpClient(guardianReqId, guardianOtp);
+      const { token } = await verifyOtp(guardianPhone, 'guardian', accessToken);
       if (guardianResendInterval.current) clearInterval(guardianResendInterval.current);
       setGuardianToken(token);
       setStep('guardianConsent');

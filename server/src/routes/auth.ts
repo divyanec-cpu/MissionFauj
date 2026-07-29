@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma.js';
 import { calendarAge, parseDob } from '../lib/age.js';
 import { signAgeVerified, signPhoneVerified, verifyAgeVerified, verifyPhoneVerified } from '../lib/jwt.js';
 import { byIp, byPhone, rateLimit } from '../lib/rateLimit.js';
+import { assertOtpVerifiedWithMsg91, isVerificationEnforced, Msg91VerificationError } from '../lib/msg91.js';
 
 export const authRouter = Router();
 
@@ -87,21 +88,26 @@ authRouter.post('/otp-sent', rateLimit(OTP_SENT_PER_IP, byIp), rateLimit(OTP_SEN
   res.json({ ok: true });
 });
 
-// POST /auth/verify-otp { phone, purpose } -> { token }
-// The client has already completed send + verify directly against MSG91
-// (browser-to-MSG91, not through this backend) before calling this. This
-// endpoint does not re-check the code with MSG91 — it only confirms a
-// matching /otp-sent bookkeeping row exists and is recent, then issues the
-// phoneVerified token used by the next step (confirm-age for the candidate,
-// or the consent step for a guardian). It is never stored client-side beyond
-// the current sign-up session.
+// POST /auth/verify-otp { phone, purpose, accessToken? } -> { token }
+// The browser completes send + verify directly against MSG91 before calling
+// this (browser-to-MSG91, not through this backend) and forwards the access
+// token MSG91 hands back on success.
+//
+// With MSG91_AUTH_KEY configured, that token is checked with MSG91 and must
+// belong to this exact phone number before any token is issued — the code is
+// then genuinely proven, not merely claimed. Without the key the endpoint
+// falls back to the old freshness-only check, which a caller can forge; that
+// path exists solely so shipping this couldn't break live logins before the
+// key was set, and the mode in force is reported on /admin/diagnostics.
 authRouter.post('/verify-otp', rateLimit(VERIFY_PER_IP, byIp), rateLimit(VERIFY_PER_PHONE, byPhone), async (req, res) => {
-  const body = z.object({ phone: phoneSchema, purpose: purposeSchema }).safeParse(req.body);
+  const body = z
+    .object({ phone: phoneSchema, purpose: purposeSchema, accessToken: z.string().min(1).optional() })
+    .safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.issues[0]?.message ?? 'Invalid request' });
     return;
   }
-  const { phone, purpose } = body.data;
+  const { phone, purpose, accessToken } = body.data;
 
   const session = await prisma.otpSession.findUnique({ where: { phone } });
   const isFresh = !!session && Date.now() - session.updatedAt.getTime() <= OTP_SESSION_TTL_MS;
@@ -109,6 +115,29 @@ authRouter.post('/verify-otp', rateLimit(VERIFY_PER_IP, byIp), rateLimit(VERIFY_
     res.status(400).json({ error: 'No OTP was sent to this number recently — go back and send one first.' });
     return;
   }
+
+  if (isVerificationEnforced()) {
+    if (!accessToken) {
+      res.status(400).json({ error: 'This app version is out of date. Please reload and sign in again.' });
+      return;
+    }
+    try {
+      await assertOtpVerifiedWithMsg91(accessToken, phone);
+    } catch (err) {
+      // The bookkeeping row is deliberately left in place on failure: deleting
+      // it would force a legitimate user whose verification hit a transient
+      // MSG91 error to request an entirely new code.
+      const message = err instanceof Msg91VerificationError ? err.message : 'Could not confirm this code.';
+      res.status(401).json({ error: message });
+      return;
+    }
+  } else {
+    console.warn(
+      '[auth] MSG91_AUTH_KEY is not set — /auth/verify-otp is trusting the client that the code was verified. ' +
+        'Set it in the environment to enforce real verification (see /admin/diagnostics).',
+    );
+  }
+
   await prisma.otpSession.delete({ where: { phone } }).catch(() => {});
 
   const token = signPhoneVerified({ phone, purpose });

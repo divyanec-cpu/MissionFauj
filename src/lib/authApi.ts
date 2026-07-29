@@ -40,11 +40,18 @@ export function registerOtpSent(phone: string, purpose: OtpPurpose, reqId: strin
   return post<{ ok: true }>('/auth/otp-sent', { phone, purpose, reqId });
 }
 
-// The client has already verified the code directly with MSG91 before
-// calling this — it only asks our backend for the session token, it does
-// not send the code here.
-export function verifyOtp(phone: string, purpose: OtpPurpose) {
-  return post<{ token: string }>('/auth/verify-otp', { phone, purpose });
+// The client has already verified the code directly with MSG91 before calling
+// this — the raw code is never sent here. `accessToken` is MSG91's proof that
+// the verification actually happened, which the backend re-checks with MSG91
+// and requires to match this phone number. It's optional in the signature only
+// because MSG91 might not return one; the backend rejects a missing token
+// whenever server-side enforcement is active.
+export function verifyOtp(phone: string, purpose: OtpPurpose, accessToken?: string | null) {
+  return post<{ token: string }>('/auth/verify-otp', {
+    phone,
+    purpose,
+    ...(accessToken ? { accessToken } : {}),
+  });
 }
 
 export function confirmAge(token: string, dobDay: number, dobMonth: number, dobYear: number) {
