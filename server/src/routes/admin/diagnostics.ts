@@ -116,6 +116,102 @@ function renderEnvDiagnosis(): string {
     <p class="muted" style="font-size:0.85rem">Names only — values are never read or displayed here.</p>`;
 }
 
+interface AuthkeyResult {
+  accepted: boolean | null;
+  verdict: string;
+  detail: string;
+  bodySnippet?: string;
+}
+
+/**
+ * Checks whether the *configured* authkey is one MSG91 actually accepts,
+ * without needing a real SMS.
+ *
+ * It sends the real authkey with a deliberately bogus access-token, which
+ * separates the two failure modes: MSG91 rejects a bad authkey with
+ * AuthenticationFailure (code 201), whereas a good authkey gets past that and
+ * fails on the token instead. So "rejected the token" is the success signal.
+ *
+ * This exists because the widget Token Auth and the account Authkey look alike
+ * and are easy to confuse, and picking the wrong one is silently fatal:
+ * enforcement turns on because a key is *present*, then every sign-in fails.
+ * The authkey is sent to MSG91, which is its normal use, and is never logged
+ * or rendered here.
+ */
+async function probeConfiguredAuthkey(): Promise<AuthkeyResult> {
+  const authkey = process.env.MSG91_AUTH_KEY?.trim();
+  if (!authkey) {
+    return { accepted: null, verdict: 'No key configured', detail: 'Set MSG91_AUTH_KEY first, then re-run this.' };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
+  try {
+    const res = await fetch(VERIFY_ACCESS_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ authkey, 'access-token': 'probe-not-a-real-token' }),
+      signal: controller.signal,
+    });
+    const text = await res.text().catch(() => '');
+    const looksAuthFailure = /authenticationfailure/i.test(text) || /"code"\s*:\s*"?201"?/.test(text);
+
+    if (looksAuthFailure) {
+      return {
+        accepted: false,
+        verdict: 'Rejected — this is the wrong credential',
+        detail:
+          'MSG91 refused the configured key itself (AuthenticationFailure), not just the fake token. This is what happens when the widget Token Auth is used instead of the account Authkey. Enforcement is active with a key that cannot work, so real sign-ins will fail — remove or correct the variable now.',
+        bodySnippet: text.slice(0, 300),
+      };
+    }
+
+    return {
+      accepted: true,
+      verdict: 'Accepted — the key works',
+      detail:
+        'MSG91 got past authentication and rejected only the fake token, which is exactly the expected response. The configured authkey is valid, so real sign-ins can be verified against it.',
+      bodySnippet: text.slice(0, 300),
+    };
+  } catch {
+    return {
+      accepted: null,
+      verdict: 'Could not determine',
+      detail: 'MSG91 could not be reached, so the key could not be checked. Run the reachability probe below.',
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+diagnosticsRouter.post('/authkey', async (_req, res) => {
+  const result = await probeConfiguredAuthkey();
+  const tone = result.accepted === true ? '#7a8b4f' : result.accepted === false ? '#9c5b3c' : '#5c6670';
+
+  res.send(
+    renderAdminPage({
+      title: 'MSG91 Authkey',
+      activePath: '/admin/diagnostics',
+      body: `
+        <h1>Configured Authkey</h1>
+        <div class="card" style="max-width:720px;border-left:4px solid ${tone}">
+          <div style="font-size:1.15rem;font-weight:700;color:${tone}">${escapeHtml(result.verdict)}</div>
+          <p>${escapeHtml(result.detail)}</p>
+          ${
+            result.bodySnippet
+              ? `<h2 style="margin-top:1.5rem">Raw response</h2>
+                 <pre style="white-space:pre-wrap;word-break:break-word;background:#22251a;border:1px solid #3a3d2e;padding:0.75rem;font-size:0.8rem;color:#c9bd97">${escapeHtml(
+                   result.bodySnippet,
+                 )}</pre>`
+              : ''
+          }
+          <a class="btn secondary" href="/admin/diagnostics">Back</a>
+        </div>
+      `,
+    }),
+  );
+});
+
 diagnosticsRouter.get('/', (_req, res) => {
   const enforced = isVerificationEnforced();
   const tone = enforced ? '#7a8b4f' : '#9c5b3c';
@@ -136,7 +232,13 @@ diagnosticsRouter.get('/', (_req, res) => {
           ${
             enforced
               ? `<p>Every sign-in re-checks MSG91's access token server-side and requires it to belong to the number
-                 being claimed. A caller cannot obtain a token for a number they do not control.</p>`
+                 being claimed. A caller cannot obtain a token for a number they do not control.</p>
+                 <p class="muted" style="font-size:0.85rem">A key being <em>present</em> is not proof it is the
+                 <em>right</em> one — the widget Token Auth and the account Authkey are easy to confuse, and the wrong
+                 one fails every sign-in. Confirm it before relying on this.</p>
+                 <form method="post" action="/admin/diagnostics/authkey">
+                   <button type="submit">Test Configured Authkey</button>
+                 </form>`
               : `<p><strong>MSG91_AUTH_KEY is not visible to this server process.</strong> Sign-in currently accepts
                  the client's word that the code was verified, so anyone able to send two HTTP requests can obtain a
                  token for any phone number, without an SMS ever being sent. That permits forged consent records and
