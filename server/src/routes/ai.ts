@@ -2,8 +2,37 @@ import { Router } from 'express';
 import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from '../lib/prisma.js';
+import { byIp, global as globalKey, rateLimit } from '../lib/rateLimit.js';
 
 export const aiRouter = Router();
+
+// This endpoint is unauthenticated and spends real money per call, and the
+// "3 free questions" cap is enforced only in the frontend's localStorage, so
+// it stops nobody who calls the API directly. Until there's a candidate
+// session to attribute calls to, these two limits are what stand between the
+// Anthropic bill and a loop.
+//
+// The per-IP limit is deliberately loose: Indian mobile carriers put large
+// numbers of users behind shared CGNAT addresses, so a tight per-IP cap would
+// lock out real candidates who merely share a carrier with someone else.
+const AI_PER_IP = {
+  name: 'ai-ask-ip',
+  limit: 60,
+  windowMs: 60 * 60 * 1000,
+  message: 'Too many AI questions from this connection. Please wait a little while and try again.',
+};
+
+// Per-IP limiting alone can't bound the bill — an attacker with many addresses
+// simply pays the per-IP price many times over. This ceiling is the one that
+// actually caps worst-case spend, at the cost of the assistant going quiet for
+// everyone if it's ever hit. Raise it as real usage grows; the /admin/stats
+// AiUsageEvent counts are the number to size it against.
+const AI_GLOBAL = {
+  name: 'ai-ask-global',
+  limit: 200,
+  windowMs: 60 * 60 * 1000,
+  message: 'The AI assistant is unusually busy right now. Please try again shortly.',
+};
 
 // Reads ANTHROPIC_API_KEY from the environment automatically.
 const anthropic = new Anthropic();
@@ -37,7 +66,7 @@ const bodySchema = z.object({
 });
 
 // POST /ai/ask { surface, question, context? } -> { answer }
-aiRouter.post('/ask', async (req, res) => {
+aiRouter.post('/ask', rateLimit(AI_PER_IP, byIp), rateLimit(AI_GLOBAL, globalKey), async (req, res) => {
   const body = bodySchema.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.issues[0]?.message ?? 'Invalid request' });

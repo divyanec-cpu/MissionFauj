@@ -3,8 +3,50 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { calendarAge, parseDob } from '../lib/age.js';
 import { signAgeVerified, signPhoneVerified, verifyAgeVerified, verifyPhoneVerified } from '../lib/jwt.js';
+import { byIp, byPhone, rateLimit } from '../lib/rateLimit.js';
 
 export const authRouter = Router();
+
+// Neither of these endpoints can currently prove the caller owns the number
+// they're claiming (see Technical Brief §7), so anyone can mint phone-verified
+// tokens and write ConsentRecord rows for numbers that aren't theirs — which
+// forges a DPDP consent record and inflates the unique-signup count on
+// /admin/stats. Rate limiting doesn't fix that; only server-authoritative OTP
+// verification does. It just puts a ceiling on how much junk one caller can
+// produce in the meantime.
+//
+// Both keyings are needed and catch different abuse: per-phone stops one
+// number being hammered, per-IP stops one caller working through many numbers.
+// The IP limits stay loose because of carrier-level CGNAT (see ai.ts).
+const HOUR_MS = 60 * 60 * 1000;
+
+const OTP_SENT_PER_PHONE = {
+  name: 'otp-sent-phone',
+  limit: 5,
+  windowMs: HOUR_MS,
+  message: 'Too many codes requested for this number. Please wait a while before trying again.',
+};
+
+const OTP_SENT_PER_IP = {
+  name: 'otp-sent-ip',
+  limit: 30,
+  windowMs: HOUR_MS,
+  message: 'Too many sign-in attempts from this connection. Please wait a while and try again.',
+};
+
+const VERIFY_PER_PHONE = {
+  name: 'verify-otp-phone',
+  limit: 10,
+  windowMs: HOUR_MS,
+  message: 'Too many verification attempts for this number. Please wait a while before trying again.',
+};
+
+const VERIFY_PER_IP = {
+  name: 'verify-otp-ip',
+  limit: 30,
+  windowMs: HOUR_MS,
+  message: 'Too many sign-in attempts from this connection. Please wait a while and try again.',
+};
 
 const phoneSchema = z.string().regex(/^\d{10}$/, 'phone must be exactly 10 digits');
 const purposeSchema = z.enum(['candidate', 'guardian']);
@@ -30,7 +72,7 @@ const CONSENT_VERSION = 'v1';
 // bookkeeping only: it does not talk to MSG91, it just records that a send
 // was initiated, so /verify-otp below has something to check freshness
 // against instead of accepting a bare claim out of nowhere.
-authRouter.post('/otp-sent', async (req, res) => {
+authRouter.post('/otp-sent', rateLimit(OTP_SENT_PER_IP, byIp), rateLimit(OTP_SENT_PER_PHONE, byPhone), async (req, res) => {
   const body = z.object({ phone: phoneSchema, purpose: purposeSchema, reqId: z.string().min(1) }).safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.issues[0]?.message ?? 'Invalid request' });
@@ -53,7 +95,7 @@ authRouter.post('/otp-sent', async (req, res) => {
 // phoneVerified token used by the next step (confirm-age for the candidate,
 // or the consent step for a guardian). It is never stored client-side beyond
 // the current sign-up session.
-authRouter.post('/verify-otp', async (req, res) => {
+authRouter.post('/verify-otp', rateLimit(VERIFY_PER_IP, byIp), rateLimit(VERIFY_PER_PHONE, byPhone), async (req, res) => {
   const body = z.object({ phone: phoneSchema, purpose: purposeSchema }).safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.issues[0]?.message ?? 'Invalid request' });
