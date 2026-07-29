@@ -89,6 +89,33 @@ async function probeMsg91(): Promise<ProbeResult> {
   }
 }
 
+/**
+ * Narrows down *why* the key isn't taking effect, without ever revealing a
+ * value. Names only: a wrong name (MSG91_AUTHKEY, MSG91_AUTH_TOKEN, a stray
+ * space) is by far the most common cause and is invisible from the dashboard,
+ * where the variable looks perfectly correct at a glance.
+ */
+function renderEnvDiagnosis(): string {
+  const names = Object.keys(process.env).filter((k) => /msg91/i.test(k)).sort();
+  const raw = process.env.MSG91_AUTH_KEY;
+
+  if (raw !== undefined && raw.trim() === '') {
+    return `<p class="error">A variable named <code>MSG91_AUTH_KEY</code> exists but its value is empty or only
+      whitespace, so it is treated as unset. Re-paste the key, checking for a stray space or newline.</p>`;
+  }
+
+  if (names.length === 0) {
+    return `<p class="error">This process can see <strong>no environment variables at all</strong> whose name
+      contains "MSG91". Either the variable was saved on a different service, or the service has not restarted since
+      it was saved.</p>`;
+  }
+
+  return `<p class="error">This process can see these MSG91-related variable names, but not
+    <code>MSG91_AUTH_KEY</code> exactly — compare them character by character against what is in the dashboard:</p>
+    <ul>${names.map((n) => `<li><code>${escapeHtml(n)}</code></li>`).join('')}</ul>
+    <p class="muted" style="font-size:0.85rem">Names only — values are never read or displayed here.</p>`;
+}
+
 diagnosticsRouter.get('/', (_req, res) => {
   const enforced = isVerificationEnforced();
   const tone = enforced ? '#7a8b4f' : '#9c5b3c';
@@ -110,13 +137,14 @@ diagnosticsRouter.get('/', (_req, res) => {
             enforced
               ? `<p>Every sign-in re-checks MSG91's access token server-side and requires it to belong to the number
                  being claimed. A caller cannot obtain a token for a number they do not control.</p>`
-              : `<p><strong>MSG91_AUTH_KEY is not set on this server.</strong> Sign-in currently accepts the client's
-                 word that the code was verified, so anyone able to send two HTTP requests can obtain a token for any
-                 phone number, without an SMS ever being sent. That permits forged consent records and inflates the
-                 signup count on Stats.</p>
-                 <p class="muted" style="font-size:0.85rem">Set <code>MSG91_AUTH_KEY</code> (your MSG91 account authkey,
-                 not the widget credentials) in this service's environment and redeploy. No code change is needed —
-                 enforcement switches on as soon as the key is present.</p>`
+              : `<p><strong>MSG91_AUTH_KEY is not visible to this server process.</strong> Sign-in currently accepts
+                 the client's word that the code was verified, so anyone able to send two HTTP requests can obtain a
+                 token for any phone number, without an SMS ever being sent. That permits forged consent records and
+                 inflates the signup count on Stats.</p>
+                 ${renderEnvDiagnosis()}
+                 <p class="muted" style="font-size:0.85rem">Environment variables are injected when the process
+                 starts, so saving one is not enough — the service has to redeploy or restart before it can see it.
+                 No code change is needed; enforcement switches on by itself once the key is present.</p>`
           }
         </div>
 
