@@ -3,6 +3,10 @@
  * placeholder panel — enough ambiguity to write a story against. */
 export interface TatPrompt {
   caption: string;
+  /** The real TAT ends on a blank slide. Marked here rather than inferred from
+   * position, so reordering or adding prompts can't move it onto a described
+   * scene — which is exactly what happened when the art picked it by index. */
+  blank?: boolean;
 }
 
 export const TAT_PROMPTS: TatPrompt[] = [
@@ -17,7 +21,7 @@ export const TAT_PROMPTS: TatPrompt[] = [
   { caption: 'A figure sits at a desk covered in books, staring at a clock on the wall.' },
   { caption: 'A soldier stands at the edge of a parade ground, watching a formation march past.' },
   { caption: 'A family gathers around a kitchen table, an unopened letter placed at its centre.' },
-  { caption: 'A blank slide with nothing on it — write a story of your own choosing.' },
+  { caption: 'A blank slide with nothing on it — write a story of your own choosing.', blank: true },
 ];
 
 export const TAT_OLQ_TAGS = ['Effective Intelligence', 'Power of Expression', 'Determination', 'Social Adaptability'];

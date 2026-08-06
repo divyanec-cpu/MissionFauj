@@ -33,7 +33,11 @@ export function TatRunner({ onComplete }: { onComplete: () => void }) {
           <div className="font-heading mb-5 text-sm font-bold tracking-wide text-amber uppercase">
             Study the scene — {viewTime}s
           </div>
-          <ScenePlaceholder variant={index} caption={TAT_PROMPTS[index].caption} />
+          <ScenePlaceholder
+            variant={index}
+            caption={TAT_PROMPTS[index].caption}
+            blank={TAT_PROMPTS[index].blank}
+          />
         </>
       ) : (
         <>

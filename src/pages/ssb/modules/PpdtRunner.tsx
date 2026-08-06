@@ -9,7 +9,11 @@ export function PpdtRunner({ onComplete }: { onComplete: () => void }) {
   const [phase, setPhase] = useState<Phase>('view');
   const [story, setStory] = useState('');
   const [notes, setNotes] = useState('');
-  const [prompt] = useState(() => PPDT_PROMPTS[Math.floor(Math.random() * PPDT_PROMPTS.length)]);
+  // Keep the index, not just the prompt: the scene art is chosen from it, so
+  // a hardcoded variant would show every candidate the same picture no matter
+  // which of the seven captions they drew.
+  const [promptIndex] = useState(() => Math.floor(Math.random() * PPDT_PROMPTS.length));
+  const prompt = PPDT_PROMPTS[promptIndex];
 
   const viewTime = useCountdown(30, 'view', () => setPhase('story'), phase === 'view');
   const storyTime = useCountdown(4 * 60, 'story', () => setPhase('discussion'), phase === 'story');
@@ -23,7 +27,7 @@ export function PpdtRunner({ onComplete }: { onComplete: () => void }) {
           <div className="font-heading mb-5 text-sm font-bold tracking-wide text-amber uppercase">
             Study the scene — {viewTime}s
           </div>
-          <ScenePlaceholder variant={3} caption={prompt.caption} />
+          <ScenePlaceholder variant={promptIndex} caption={prompt.caption} />
         </>
       )}
 
