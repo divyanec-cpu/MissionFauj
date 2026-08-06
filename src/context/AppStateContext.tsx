@@ -39,7 +39,10 @@ interface AppStateValue {
   startWrittenTrial: (exam: WrittenExam) => void;
   startSsbTrial: () => void;
   registerSsb: (registration: SsbRegistration) => void;
-  incrementAiUsage: (kind: keyof AiUsage) => void;
+  /** Mirrors the server's authoritative counters after an AI call. Replaces an
+   *  earlier local increment: the cap is enforced server-side now, so a second
+   *  independent tally here could only ever disagree with it. */
+  applyServerAiUsage: (usage: Partial<AiUsage>) => void;
 }
 
 const AppStateContext = createContext<AppStateValue | null>(null);
@@ -286,13 +289,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         setSsbSubscription((prev) => (prev === 'subscribed' ? 'subscribed' : 'trial'));
       },
       registerSsb: (registration) => setSsbRegistration(registration),
-      // Defaults are spread over `prev` for the same reason as on read — a
-      // stored value predating this counter would otherwise yield NaN.
-      incrementAiUsage: (kind) =>
-        setAiUsage((prev) => {
-          const base = { ...DEFAULT_AI_USAGE, ...prev };
-          return { ...base, [kind]: base[kind] + 1 };
-        }),
+      // Defaults are spread under the server's values so a counter the server
+      // hasn't stored yet reads 0 rather than undefined.
+      applyServerAiUsage: (usage) => setAiUsage((prev) => ({ ...DEFAULT_AI_USAGE, ...prev, ...usage })),
     };
   }, [
     auth,

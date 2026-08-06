@@ -47,9 +47,9 @@ export function FloatingAiAssistant() {
   const limitReached = !unlocked && used >= FREE_QUESTIONS;
 
   const ask = async (q: string) => {
-    const answer = await askAi('general', q);
+    const { answer, aiUsage } = await askAi('general', q, appState.auth?.sessionToken);
     setMessages((prev) => [...prev, { q, a: answer }]);
-    appState.incrementAiUsage('general');
+    if (aiUsage) appState.applyServerAiUsage(aiUsage);
   };
 
   return (

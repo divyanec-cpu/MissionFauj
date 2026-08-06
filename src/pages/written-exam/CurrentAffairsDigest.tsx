@@ -12,7 +12,7 @@ interface CurrentAffairsDigestProps {
 }
 
 export function CurrentAffairsDigest({ posts, horizontal, unlocked, onOpenPricing }: CurrentAffairsDigestProps) {
-  const { aiUsage, incrementAiUsage } = useAppState();
+  const { aiUsage, auth, applyServerAiUsage } = useAppState();
   const [openPost, setOpenPost] = useState<DigestPost | null>(null);
   const [messages, setMessages] = useState<AiMessage[]>([]);
 
@@ -25,9 +25,9 @@ export function CurrentAffairsDigest({ posts, horizontal, unlocked, onOpenPricin
 
   const ask = async (q: string) => {
     const context = openPost ? `${openPost.title} — ${openPost.detail}` : undefined;
-    const a = await askAi('digest', q, context);
-    setMessages((prev) => [...prev, { q, a }]);
-    incrementAiUsage('digestAssist');
+    const { answer, aiUsage: served } = await askAi('digest', q, auth?.sessionToken, context);
+    setMessages((prev) => [...prev, { q, a: answer }]);
+    if (served) applyServerAiUsage(served);
   };
 
   return (

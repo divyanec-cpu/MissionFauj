@@ -122,26 +122,35 @@ authRouter.post('/verify-otp', rateLimit(VERIFY_PER_IP, byIp), rateLimit(VERIFY_
     return;
   }
 
-  if (isVerificationEnforced()) {
-    if (!accessToken) {
-      res.status(400).json({ error: 'This app version is out of date. Please reload and sign in again.' });
-      return;
-    }
-    try {
-      await assertOtpVerifiedWithMsg91(accessToken, phone);
-    } catch (err) {
-      // The bookkeeping row is deliberately left in place on failure: deleting
-      // it would force a legitimate user whose verification hit a transient
-      // MSG91 error to request an entirely new code.
-      const message = err instanceof Msg91VerificationError ? err.message : 'Could not confirm this code.';
-      res.status(401).json({ error: message });
-      return;
-    }
-  } else {
-    console.warn(
-      '[auth] MSG91_AUTH_KEY is not set — /auth/verify-otp is trusting the client that the code was verified. ' +
-        'Set it in the environment to enforce real verification (see /admin/diagnostics).',
+  // No fallback branch. Verification is confirmed with MSG91 or it does not
+  // happen — a missing key is a misconfiguration to fix, not a reason to start
+  // trusting the client again. The earlier fallback existed only so deploying
+  // this couldn't break live sign-in before the key was set; the key is set and
+  // confirmed working in production, so the weak path is now unreachable rather
+  // than merely unused.
+  if (!isVerificationEnforced()) {
+    console.error(
+      '[auth] MSG91_AUTH_KEY is not set — sign-in is refused rather than falling back to trusting the client. ' +
+        'Set it in this environment (see /admin/diagnostics).',
     );
+    res.status(503).json({ error: 'Sign-in is temporarily unavailable. Please try again shortly.' });
+    return;
+  }
+
+  if (!accessToken) {
+    res.status(400).json({ error: 'This app version is out of date. Please reload and sign in again.' });
+    return;
+  }
+
+  try {
+    await assertOtpVerifiedWithMsg91(accessToken, phone);
+  } catch (err) {
+    // The bookkeeping row is deliberately left in place on failure: deleting it
+    // would force a legitimate user whose verification hit a transient MSG91
+    // error to request an entirely new code.
+    const message = err instanceof Msg91VerificationError ? err.message : 'Could not confirm this code.';
+    res.status(401).json({ error: message });
+    return;
   }
 
   await prisma.otpSession.delete({ where: { phone } }).catch(() => {});
