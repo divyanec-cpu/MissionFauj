@@ -150,7 +150,7 @@ export function ProfilePage() {
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="font-heading clip-button self-start cursor-pointer border-none bg-not-eligible px-6 py-2.5 text-xs font-bold tracking-wide text-ink uppercase"
+                className="font-heading clip-button self-start cursor-pointer border-none bg-not-eligible px-6 py-2.5 text-xs font-bold tracking-wide text-[#1b1500] uppercase"
               >
                 Sign Out
               </button>

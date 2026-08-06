@@ -6,12 +6,19 @@
   --color-bg-panel-2: #22251a;
   --color-border: #3a3d2e;
   --color-khaki: #c9bd97;
-  --color-steel: #5c6670;
+  /* Accent colours are used as small UPPERCASE text on the dark panels, which
+     is the worst case for legibility, so each is set light enough to clear
+     WCAG AA (4.5:1) against the lightest panel (--color-bg-panel-2). The
+     original values sat at 2.66–4.18 and were genuinely hard to read: steel
+     and not-eligible failed even the 3.0 large-text floor. Anything added
+     here needs checking in both directions — as text on a panel, and as a
+     background with text sitting on it. */
+  --color-steel: #8f9aa6;
   --color-ink: #ece7d4;
   --color-muted: #9b9a86;
   --color-olive: #5c6b34;
-  --color-eligible: #7a8b4f;
-  --color-not-eligible: #9c5b3c;
+  --color-eligible: #9db265;
+  --color-not-eligible: #d9765a;
   --color-amber: #d99a3d;
   --color-amber-light: #ecc27a;
 

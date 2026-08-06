@@ -61,7 +61,7 @@ export function QuizRunner({ title, questions, onExit }: QuizRunnerProps) {
             let cls = 'border-border bg-bg-panel-2 text-ink';
             if (selected !== null) {
               if (i === q.correctIndex) cls = 'border-eligible bg-eligible text-[#0f130a]';
-              else if (i === selected) cls = 'border-not-eligible bg-not-eligible text-white';
+              else if (i === selected) cls = 'border-not-eligible bg-not-eligible text-[#1b1500]';
             }
             return (
               <button
