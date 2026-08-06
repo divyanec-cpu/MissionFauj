@@ -109,11 +109,24 @@ body {
   font-family: var(--font-body);
 }
 
-a {
-  color: var(--color-amber);
-}
-a:hover {
-  color: var(--color-amber-light);
+/* In @layer base, not unlayered, and the distinction is load-bearing. Tailwind
+   v4 puts utilities in @layer utilities, and unlayered CSS beats layered CSS
+   outright — specificity never even gets consulted. So an unlayered `a` rule
+   silently overrode every text-* utility on every anchor in the app: `<Link>`
+   elements styled text-muted or text-ink rendered amber instead, and Home's
+   primary CTA (`text-[#1b1500]` on `bg-amber`) came out amber-on-amber at 1.0
+   contrast — a button with a completely invisible label. The identically
+   styled <button> next to it was fine, which is what made it look like a
+   one-off rather than a rule affecting ~34 anchors.
+
+   Keep element defaults in a layer so a utility can always override them. */
+@layer base {
+  a {
+    color: var(--color-amber);
+  }
+  a:hover {
+    color: var(--color-amber-light);
+  }
 }
 
 ::selection {
