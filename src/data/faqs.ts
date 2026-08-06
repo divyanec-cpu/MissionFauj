@@ -48,4 +48,20 @@ export const FAQS: Faq[] = [
     q: 'What are Officer-Like Qualities (OLQs)?',
     a: 'Officer-Like Qualities are 15 traits — such as effective intelligence, courage, and cooperation — that the board assesses across every stage. No single task scores them.',
   },
+  {
+    q: 'I am already serving. How do I become an officer?',
+    a: 'Both services run internal routes for serving personnel. In the Navy it is the Cadet Entry Scheme (CW), for serving sailors; in the Army it is the Army Cadet College (ACC), for serving soldiers, whose entrants train at the ACC Wing before joining the Indian Military Academy. Unlike NDA or CDS these are not open civilian notifications — you apply through your own unit, and the age, service-length and qualification criteria are set by each service\'s current notification, so confirm them through your unit rather than from any app.',
+  },
+  {
+    q: 'Why do CW and ACC not appear in the Eligibility Check?',
+    a: 'Because eligibility for them depends on your service record — how long you have served and in what capacity — which this app does not ask for and could not verify. Showing a verdict from age and education alone would be misleading, so they are deliberately left out of the scan. You can still select CW or ACC when registering for SSB training, and the preparation itself is identical.',
+  },
+  {
+    q: 'Can the AI Assistant tell me if my answer is good?',
+    a: 'No, and this is deliberate rather than a limitation. The assistant explains concepts, Officer-Like Qualities and how a strong response is generally structured, but it will never score, grade or rank anything you write, and it will not judge your personality or suitability from what you tell it. Only a human assessor does that. It also will not tell you that you personally qualify for a scheme — use the Eligibility Check and the official notification for that.',
+  },
+  {
+    q: 'Where do I find the AI Assistant?',
+    a: 'The "Ask AI" button sits in the bottom corner of every page once you are signed in, and your conversation stays with you as you move around the app. There are also two focused versions: one inside SSB Training for psychology and interview preparation, and one attached to each Current Affairs brief for questions about that specific story.',
+  },
 ];

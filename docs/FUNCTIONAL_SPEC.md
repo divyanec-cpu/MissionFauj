@@ -71,7 +71,7 @@ Which exam tabs show is driven entirely by the candidate's chosen path (§3) —
 
 Never gated by path or eligibility — reachable directly regardless of what a candidate picked during onboarding.
 
-1. **Registration**: entry scheme picker (`SchemeStep.tsx`) → attempt count (`AttemptsStep.tsx`) → welcome (`WelcomeStep.tsx`).
+1. **Registration**: entry scheme picker (`SchemeStep.tsx`, list in `src/data/entrySchemes.ts`) → attempt count (`AttemptsStep.tsx`) → welcome (`WelcomeStep.tsx`). The scheme list is deliberately broader than the 13-scheme eligibility table, because SSB practice is scheme-agnostic — it includes both serving-personnel routes, **ACC** (Army soldiers) and **CW** (Navy sailors), which the eligibility scan cannot assess (§5) but which candidates still prepare for identically.
 2. **Module Hub** (`ModuleHub.tsx`), grouped:
    - **Psychology**: TAT (30s view, 4 min write per image), WAT (15s/word, backspace/paste blocked — enforced, not just described), SRT (timed situation reactions), Self Description (5 fixed perspectives, timed).
    - **Group Testing**: PPDT (30s picture view + text narration/discussion, no recording), Lecturette (random topic, prep countdown + timed delivery notes), Group Tasks (GD/GPE-style text planning exercises).
@@ -86,7 +86,7 @@ Category filter (IO / GTO / Psychologist / Board President / English & Confidenc
 
 ## 9. Help Center & Glossary
 
-- **Help Center** (`HelpCenterPage.tsx`): eligibility/qualification reference table (13 schemes), 5-day SSB process breakdown, searchable FAQ (`FAQSearch.tsx`, client-side substring match).
+- **Help Center** (`HelpCenterPage.tsx`): eligibility/qualification reference table (13 schemes), 5-day SSB process breakdown, searchable FAQ (`FAQSearch.tsx`, client-side substring match). The FAQ covers app behaviour as well as exam facts — what the AI Assistant will and won't do, where to find it, and why CW/ACC are selectable for SSB prep but absent from the Eligibility Check. The reference table deliberately carries **no row for CW or ACC**: their criteria depend on service record and are set per-notification, and inventing age/service figures to fill the columns would breach the no-fabricated-content rule (Technical Brief §5).
 - **Glossary** (`GlossaryPage.tsx`): full-form lookup for every abbreviation used in the app, grouped by category (Entry Schemes / SSB & Psychology / Written Exam / General).
 
 Both pages carry a local secondary nav (Eligibility → `/eligibility-check`, Written Prep, SSB Training, Expert Consultation).
@@ -105,11 +105,12 @@ On every authenticated page: logo → page label → Eligibility Check / Help / 
 
 ## 12. AI Assist (`src/components/ai/AiAssistChat.tsx`)
 
-Two surfaces share this component, both backed by a real call to Claude (`server/src/routes/ai.ts`, `POST /ai/ask`) rather than canned text:
+Three surfaces share this component, all backed by a real call to Claude (`server/src/routes/ai.ts`, `POST /ai/ask`) rather than canned text. Each sends a different `surface` value, which selects the system prompt server-side, and each has its own free-question counter:
 
 - **SSB Assistant** (`AiAssistantBonus.tsx`, free bonus module): explains OLQs, rubrics, and response structure for WAT/TAT/SRT/PPDT/interview prep. 3 free questions in trial, unlimited once subscribed.
 - **Current Affairs Digest Assist** (`CurrentAffairsDigest.tsx`): answers questions about a specific news brief, with that brief's title/detail sent along as context so answers stay on-topic. Same 3-free/unlimited cap.
+- **Floating Assistant** (`FloatingAiAssistant.tsx`): an "Ask AI" button in the bottom corner of every page, covering exams, SSB, entry schemes and the app itself. Mounted once in `App.tsx` outside `Routes`, so the conversation survives navigation instead of resetting per page; it renders nothing until setup is complete, since during login and onboarding it would sit on top of a flow whose whole purpose is getting through it. Same 3-free/unlimited cap on its own counter. Beyond the shared no-scoring rule it also refuses to tell a candidate they personally qualify for a scheme, deferring to the Eligibility Check (§5) and the official notification — eligibility depends on the current year's criteria, which a model shouldn't be asserting.
 
-Both surfaces show a "Thinking…" state while the request is in flight and an inline error message if the call fails (network issue or the assistant being temporarily unavailable) — a failed call doesn't count against the free-question cap. **Non-negotiable**: the backend's system prompt instructs the model to explain and coach only — it will not score, grade, or give a pass/fail verdict on a candidate's own WAT/TAT/SRT/PPDT/interview response even if the candidate pastes it in and asks to be scored. Only a human assessor (or Expert Consultation, §8) gives that kind of feedback.
+All three surfaces show a "Thinking…" state while the request is in flight and an inline error message if the call fails (network issue, rate limit, or the assistant being temporarily unavailable) — a failed call doesn't count against the free-question cap. **Non-negotiable**: the backend's system prompt instructs the model to explain and coach only — it will not score, grade, or give a pass/fail verdict on a candidate's own WAT/TAT/SRT/PPDT/interview response even if the candidate pastes it in and asks to be scored. Only a human assessor (or Expert Consultation, §8) gives that kind of feedback. This rule is carried by the floating assistant's prompt too, even though it isn't an SSB-specific surface: a candidate can paste a TAT story into it just as easily, so the guardrail has to hold wherever the question is asked.
 
 Each successful reply is logged server-side as an aggregate event (surface only — no phone number, no question or answer text) so real adoption of the feature is visible on the owner-only `/admin/stats` dashboard (see Technical Brief §6). Candidates never see this dashboard or know it exists beyond the general analytics disclosure in the login sequence's consent copy.
