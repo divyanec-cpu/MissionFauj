@@ -11,6 +11,7 @@ export interface RemoteCandidateState {
   ssbSubscription: unknown;
   ssbRegistration: unknown;
   aiUsage: unknown;
+  progress: unknown;
   updatedAt?: string;
 }
 

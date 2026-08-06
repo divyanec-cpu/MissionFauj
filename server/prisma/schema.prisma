@@ -169,6 +169,9 @@ model CandidateState {
   ssbSubscription      String?
   ssbRegistration      Json?
   aiUsage              Json?
+  /// StudyProgress: completed chapter keys, active dates, longest streak.
+  /// Everything in it is recorded from a real action — see src/types/progress.ts.
+  progress             Json?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 }

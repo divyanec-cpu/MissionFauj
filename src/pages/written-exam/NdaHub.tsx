@@ -4,10 +4,8 @@ import { MOCK_TESTS, type MockTest } from '../../data/mockQuestionBanks';
 import type { DigestPost } from '../../data/digestPosts';
 import { fetchDigestPosts } from '../../lib/contentApi';
 import { CurrentAffairsDigest } from './CurrentAffairsDigest';
-
-// Real, tracked streak for this account — starts empty for a new sign-up;
-// no fabricated history.
-const STREAK_DAYS = [0, 0, 0, 0, 0, 0, 0];
+import { useAppState } from '../../context/AppStateContext';
+import { chapterKey, currentStreak, dayKey, recentActivity } from '../../types/progress';
 
 function pctColor(pct: number) {
   if (pct >= 60) return 'text-eligible';
@@ -23,8 +21,18 @@ interface NdaHubProps {
 }
 
 export function NdaHub({ onOpenChapter, onOpenMockTest, unlocked, onOpenPricing }: NdaHubProps) {
+  const { progress } = useAppState();
   const mocks = MOCK_TESTS.filter((m) => m.exam === 'NDA');
   const [digestPosts, setDigestPosts] = useState<DigestPost[]>([]);
+
+  // Derived from what this account actually did, not stored on the syllabus.
+  // A chapter is done or it isn't — there's no observable middle value, so
+  // showing a part-complete percentage would be inventing precision.
+  const today = dayKey(new Date());
+  const streak = currentStreak(progress, today);
+  const streakDays = recentActivity(progress, today);
+  const isDone = (subject: string, chapter: string) =>
+    progress.completedChapters.includes(chapterKey('NDA', subject, chapter));
 
   useEffect(() => {
     fetchDigestPosts()
@@ -42,7 +50,7 @@ export function NdaHub({ onOpenChapter, onOpenMockTest, unlocked, onOpenPricing 
           <h2 className="font-heading text-3xl font-bold tracking-wide uppercase">Subjects &amp; Chapters</h2>
         </div>
         {NDA_SUBJECTS.map((subj) => {
-          const completed = subj.chapters.filter((c) => c.pct >= 60).length;
+          const completed = subj.chapters.filter((c) => isDone(subj.name, c.name)).length;
           return (
             <div key={subj.name}>
               <div className="mb-2.5 flex items-baseline justify-between">
@@ -52,25 +60,29 @@ export function NdaHub({ onOpenChapter, onOpenMockTest, unlocked, onOpenPricing 
                 </div>
               </div>
               <div className="flex flex-col gap-2">
-                {subj.chapters.map((ch) => (
-                  <div
-                    key={ch.name}
-                    onClick={() => onOpenChapter(subj.name, ch.name)}
-                    className="bg-bg-panel border border-border flex cursor-pointer items-center gap-3 px-4 py-3"
-                  >
+                {subj.chapters.map((ch) => {
+                  const chapterDone = isDone(subj.name, ch.name);
+                  const pct = chapterDone ? 100 : 0;
+                  return (
                     <div
-                      className={`bg-bg-panel-2 border border-border font-heading flex h-8.5 w-8.5 flex-none items-center justify-center text-[13px] font-bold ${pctColor(ch.pct)}`}
+                      key={ch.name}
+                      onClick={() => onOpenChapter(subj.name, ch.name)}
+                      className="bg-bg-panel border border-border flex cursor-pointer items-center gap-3 px-4 py-3"
                     >
-                      {ch.pct}%
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-semibold">{ch.name}</div>
-                      <div className="bg-bg-panel-2 mt-1.5 h-[3px]">
-                        <div className="h-full bg-amber" style={{ width: `${ch.pct}%` }} />
+                      <div
+                        className={`bg-bg-panel-2 border border-border font-heading flex h-8.5 w-8.5 flex-none items-center justify-center text-[13px] font-bold ${pctColor(pct)}`}
+                      >
+                        {chapterDone ? '✓' : '–'}
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold">{ch.name}</div>
+                        <div className="bg-bg-panel-2 mt-1.5 h-[3px]">
+                          <div className="h-full bg-amber" style={{ width: `${pct}%` }} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );
@@ -80,11 +92,18 @@ export function NdaHub({ onOpenChapter, onOpenMockTest, unlocked, onOpenPricing 
       <div className="flex flex-col gap-4.5">
         <div className="bg-bg-panel border border-border border-l-4 border-l-amber px-4.5 py-4">
           <div className="font-heading mb-2.5 text-sm font-bold tracking-wide uppercase">Daily Streak</div>
-          <div className="font-heading text-2xl font-bold text-amber">0 Days</div>
+          <div className="font-heading text-2xl font-bold text-amber">
+            {streak} {streak === 1 ? 'Day' : 'Days'}
+          </div>
           <div className="mt-2.5 flex gap-1">
-            {STREAK_DAYS.map((v, i) => (
-              <div key={i} className={`h-3.5 w-3.5 ${v ? 'bg-amber' : 'bg-bg-panel-2'}`} />
+            {streakDays.map((active, i) => (
+              <div key={i} className={`h-3.5 w-3.5 ${active ? 'bg-amber' : 'bg-bg-panel-2'}`} />
             ))}
+          </div>
+          <div className="mt-2 text-[11px] text-muted">
+            {streak === 0
+              ? 'Open the app tomorrow to start a streak.'
+              : `Longest: ${progress.longestStreak} ${progress.longestStreak === 1 ? 'day' : 'days'}`}
           </div>
         </div>
 

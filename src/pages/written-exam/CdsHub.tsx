@@ -5,6 +5,8 @@ import type { DigestPost } from '../../data/digestPosts';
 import { fetchDigestPosts } from '../../lib/contentApi';
 import { PillButton } from '../../components/ui/PillButton';
 import { CurrentAffairsDigest } from './CurrentAffairsDigest';
+import { useAppState } from '../../context/AppStateContext';
+import { chapterKey } from '../../types/progress';
 
 interface CdsHubProps {
   onOpenMockTest: (test: MockTest) => void;
@@ -13,6 +15,7 @@ interface CdsHubProps {
 }
 
 export function CdsHub({ onOpenMockTest, unlocked, onOpenPricing }: CdsHubProps) {
+  const { progress, toggleChapterComplete } = useAppState();
   const [track, setTrack] = useState<CdsTrack>('IMA/INA/AFA');
   const isOta = track === 'OTA (Non-Tech)';
   const subjects = getCdsSubjects(track);
@@ -47,19 +50,34 @@ export function CdsHub({ onOpenMockTest, unlocked, onOpenPricing }: CdsHubProps)
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {subjects.map((subj) => (
-          <div
-            key={subj.name}
-            className={`bg-bg-panel border border-border flex flex-col gap-2.5 p-5 ${subj.progress === 0 && isOta ? 'opacity-40' : ''}`}
-          >
-            <div className="font-heading text-lg font-bold uppercase">{subj.name}</div>
-            <div className="text-xs text-muted">{subj.note}</div>
-            <div className="bg-bg-panel-2 mt-1 h-1.5">
-              <div className="h-full bg-amber" style={{ width: `${subj.progress}%` }} />
+        {subjects.map((subj) => {
+          // Same self-marked model as NDA chapters: covered or not, recorded
+          // from the candidate's own action rather than guessed at.
+          const key = chapterKey('CDS', track, subj.name);
+          const covered = progress.completedChapters.includes(key);
+          return (
+            <div
+              key={subj.name}
+              className={`bg-bg-panel border border-border flex flex-col gap-2.5 p-5 ${!covered && isOta ? 'opacity-40' : ''}`}
+            >
+              <div className="font-heading text-lg font-bold uppercase">{subj.name}</div>
+              <div className="text-xs text-muted">{subj.note}</div>
+              <div className="bg-bg-panel-2 mt-1 h-1.5">
+                <div className="h-full bg-amber" style={{ width: covered ? '100%' : '0%' }} />
+              </div>
+              <button
+                type="button"
+                onClick={() => toggleChapterComplete(key)}
+                aria-pressed={covered}
+                className={`font-heading self-start cursor-pointer border bg-transparent px-3 py-1.5 text-[11px] font-semibold tracking-wide uppercase ${
+                  covered ? 'border-eligible text-eligible' : 'border-border text-muted'
+                }`}
+              >
+                {covered ? '✓ Covered' : 'Mark Covered'}
+              </button>
             </div>
-            <div className="text-[11px] text-muted">{subj.progress}% covered</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div>

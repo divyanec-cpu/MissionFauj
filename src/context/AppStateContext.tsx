@@ -7,6 +7,7 @@ import type { SchemeResult } from '../types/schemes';
 import type { AiUsage, SsbRegistration, SubscriptionState, WrittenExam } from '../types/subscription';
 import type { VerifiedAuth } from '../types/auth';
 import type { CandidatePath } from '../types/candidatePath';
+import { DEFAULT_PROGRESS, dayKey, withTodayRecorded, type StudyProgress } from '../types/progress';
 
 interface WrittenSubscriptions {
   NDA: SubscriptionState;
@@ -43,6 +44,8 @@ interface AppStateValue {
    *  earlier local increment: the cap is enforced server-side now, so a second
    *  independent tally here could only ever disagree with it. */
   applyServerAiUsage: (usage: Partial<AiUsage>) => void;
+  progress: StudyProgress;
+  toggleChapterComplete: (key: string) => void;
 }
 
 const AppStateContext = createContext<AppStateValue | null>(null);
@@ -72,6 +75,7 @@ const PER_CANDIDATE_KEYS = [
   'ssbSubscription',
   'ssbRegistration',
   'aiUsage',
+  'progress',
 ];
 
 function scopedKeyFor(phone: string | null) {
@@ -102,6 +106,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [ssbSubscription, setSsbSubscription] = usePersistedState<SubscriptionState>(key('ssbSubscription'), 'none');
   const [ssbRegistration, setSsbRegistration] = usePersistedState<SsbRegistration | null>(key('ssbRegistration'), null);
   const [storedAiUsage, setAiUsage] = usePersistedState<AiUsage>(key('aiUsage'), DEFAULT_AI_USAGE);
+  const [storedProgress, setProgress] = usePersistedState<StudyProgress>(key('progress'), DEFAULT_PROGRESS);
+  // Same defaults-on-read treatment as aiUsage: accounts written before this
+  // existed have no progress blob, and a missing array would throw on .includes.
+  const progress = useMemo<StudyProgress>(() => ({ ...DEFAULT_PROGRESS, ...storedProgress }), [storedProgress]);
   // Accounts written before a counter existed have it missing rather than 0,
   // which would read as undefined and increment to NaN. Merging defaults on
   // read means adding a counter later never needs a data migration.
@@ -126,6 +134,17 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [hydratedToken, setHydratedToken] = useState<string | null>(null);
   const lastPushed = useRef<string | null>(null);
 
+  // Records that the app was used today, which is the entire basis of the
+  // streak — no other event marks a day as active. Guarded on being signed in
+  // so an unopened login screen can't build a streak, and idempotent within a
+  // day, so StrictMode's double-invoke and any re-render are both harmless.
+  const isSignedIn = Boolean(auth);
+  useEffect(() => {
+    if (!isSignedIn) return;
+    const today = dayKey(new Date());
+    setProgress((prev) => withTodayRecorded({ ...DEFAULT_PROGRESS, ...prev }, today));
+  }, [isSignedIn, setProgress]);
+
   const syncPayload = useMemo(
     () => ({
       candidateName,
@@ -136,8 +155,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       ssbSubscription,
       ssbRegistration,
       aiUsage,
+      progress,
     }),
-    [candidateName, candidatePath, profile, eligibilityResults, writtenSubscriptions, ssbSubscription, ssbRegistration, aiUsage],
+    [candidateName, candidatePath, profile, eligibilityResults, writtenSubscriptions, ssbSubscription, ssbRegistration, aiUsage, progress],
   );
   const serializedPayload = JSON.stringify(syncPayload);
 
@@ -165,6 +185,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
             remote.aiUsage && typeof remote.aiUsage === 'object'
               ? { ...DEFAULT_AI_USAGE, ...(remote.aiUsage as AiUsage) }
               : DEFAULT_AI_USAGE;
+          const nextProgress =
+            remote.progress && typeof remote.progress === 'object'
+              ? { ...DEFAULT_PROGRESS, ...(remote.progress as StudyProgress) }
+              : DEFAULT_PROGRESS;
 
           setCandidateName(nextName);
           setCandidatePath(nextPath);
@@ -174,6 +198,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           setSsbSubscription(nextSsb);
           setSsbRegistration((remote.ssbRegistration ?? null) as SsbRegistration | null);
           setAiUsage(nextAiUsage);
+          setProgress(nextProgress);
 
           // Record what we just adopted so the state change we caused doesn't
           // immediately echo back up as a redundant write.
@@ -186,6 +211,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
             ssbSubscription: nextSsb,
             ssbRegistration: (remote.ssbRegistration ?? null) as SsbRegistration | null,
             aiUsage: nextAiUsage,
+            progress: nextProgress,
           });
         } else {
           // Nothing stored for this number yet — every candidate from before
@@ -292,6 +318,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       // Defaults are spread under the server's values so a counter the server
       // hasn't stored yet reads 0 rather than undefined.
       applyServerAiUsage: (usage) => setAiUsage((prev) => ({ ...DEFAULT_AI_USAGE, ...prev, ...usage })),
+      progress,
+      toggleChapterComplete: (chapter) =>
+        setProgress((prev) => {
+          const base = { ...DEFAULT_PROGRESS, ...prev };
+          const done = base.completedChapters.includes(chapter);
+          return {
+            ...base,
+            completedChapters: done
+              ? base.completedChapters.filter((c) => c !== chapter)
+              : [...base.completedChapters, chapter],
+          };
+        }),
     };
   }, [
     auth,
@@ -312,6 +350,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setSsbSubscription,
     setSsbRegistration,
     setAiUsage,
+    progress,
+    setProgress,
   ]);
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
