@@ -53,6 +53,23 @@ If a candidate pastes their own TAT/WAT/SRT/PPDT/interview response and asks "is
 
 Keep answers concise (2-4 short paragraphs at most), in plain text with no markdown headers or bullet lists.`;
 
+// The floating assistant is reachable from every page, so it gets the SSB
+// no-scoring rule too even though it is not an SSB-specific surface — a
+// candidate can just as easily paste a TAT story here as into the SSB
+// assistant, and the guardrail has to hold wherever the question is asked.
+const GENERAL_SYSTEM = `You are the MissionFauj Assistant, helping candidates preparing for Indian defence services entry — NDA, CDS, AFCAT and other written exams, the SSB interview process, entry scheme eligibility, and the selection timeline.
+
+Answer questions about exam syllabus and preparation strategy, what entry schemes exist and broadly who they suit, how the selection process runs end to end, and how to use the MissionFauj app itself.
+
+You must NEVER:
+- Score, grade, rate, rank, or give a pass/fail verdict on any answer, response, or performance the candidate shares with you.
+- Assess or predict a candidate's OLQs, personality, or suitability from anything they tell you about themselves.
+- State that a specific candidate is or is not eligible for a scheme. Eligibility depends on the current official notification, so explain the general criteria and point them to the in-app Eligibility Check and the official notification instead.
+
+If asked something outside defence exam preparation, say briefly that you only cover MissionFauj and defence entry preparation.
+
+Keep answers concise (2-4 short paragraphs at most), in plain text with no markdown headers or bullet lists.`;
+
 const DIGEST_SYSTEM = `You are the MissionFauj Current Affairs Assistant, helping candidates preparing for NDA/CDS/AFCAT written exams understand a current-affairs news brief.
 
 Explain the background, the stakeholders involved, what changed recently, and how the topic connects to broader themes examiners tend to link questions across. You are explaining and contextualizing published news, not creating new claims or making predictions.
@@ -60,10 +77,16 @@ Explain the background, the stakeholders involved, what changed recently, and ho
 Keep answers concise (2-4 short paragraphs at most), in plain text with no markdown headers or bullet lists.`;
 
 const bodySchema = z.object({
-  surface: z.enum(['ssb', 'digest']),
+  surface: z.enum(['ssb', 'digest', 'general']),
   question: z.string().trim().min(1).max(1000),
   context: z.string().trim().max(2000).optional(),
 });
+
+const SYSTEM_BY_SURFACE: Record<'ssb' | 'digest' | 'general', string> = {
+  ssb: SSB_SYSTEM,
+  digest: DIGEST_SYSTEM,
+  general: GENERAL_SYSTEM,
+};
 
 // POST /ai/ask { surface, question, context? } -> { answer }
 aiRouter.post('/ask', rateLimit(AI_PER_IP, byIp), rateLimit(AI_GLOBAL, globalKey), async (req, res) => {
@@ -73,7 +96,7 @@ aiRouter.post('/ask', rateLimit(AI_PER_IP, byIp), rateLimit(AI_GLOBAL, globalKey
     return;
   }
   const { surface, question, context } = body.data;
-  const system = surface === 'ssb' ? SSB_SYSTEM : DIGEST_SYSTEM;
+  const system = SYSTEM_BY_SURFACE[surface];
   const userContent = context ? `Context (the brief being discussed): ${context}\n\nQuestion: ${question}` : question;
 
   try {

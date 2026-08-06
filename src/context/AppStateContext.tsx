@@ -15,7 +15,9 @@ interface WrittenSubscriptions {
 }
 
 const DEFAULT_WRITTEN_SUBSCRIPTIONS: WrittenSubscriptions = { NDA: 'none', CDS: 'none', AFCAT: 'none' };
-const DEFAULT_AI_USAGE: AiUsage = { ssbAssistant: 0, digestAssist: 0 };
+// Spread over any stored value on read, so an account saved before a counter
+// existed picks up the new one at 0 rather than undefined.
+const DEFAULT_AI_USAGE: AiUsage = { ssbAssistant: 0, digestAssist: 0, general: 0 };
 
 interface AppStateValue {
   auth: VerifiedAuth | null;
@@ -96,7 +98,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   );
   const [ssbSubscription, setSsbSubscription] = usePersistedState<SubscriptionState>(key('ssbSubscription'), 'none');
   const [ssbRegistration, setSsbRegistration] = usePersistedState<SsbRegistration | null>(key('ssbRegistration'), null);
-  const [aiUsage, setAiUsage] = usePersistedState<AiUsage>(key('aiUsage'), DEFAULT_AI_USAGE);
+  const [storedAiUsage, setAiUsage] = usePersistedState<AiUsage>(key('aiUsage'), DEFAULT_AI_USAGE);
+  // Accounts written before a counter existed have it missing rather than 0,
+  // which would read as undefined and increment to NaN. Merging defaults on
+  // read means adding a counter later never needs a data migration.
+  const aiUsage = useMemo<AiUsage>(() => ({ ...DEFAULT_AI_USAGE, ...storedAiUsage }), [storedAiUsage]);
 
   // ---------------------------------------------------------------------
   // Sync with the server, so a candidate's profile and entitlements survive
@@ -280,7 +286,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         setSsbSubscription((prev) => (prev === 'subscribed' ? 'subscribed' : 'trial'));
       },
       registerSsb: (registration) => setSsbRegistration(registration),
-      incrementAiUsage: (kind) => setAiUsage((prev) => ({ ...prev, [kind]: prev[kind] + 1 })),
+      // Defaults are spread over `prev` for the same reason as on read — a
+      // stored value predating this counter would otherwise yield NaN.
+      incrementAiUsage: (kind) =>
+        setAiUsage((prev) => {
+          const base = { ...DEFAULT_AI_USAGE, ...prev };
+          return { ...base, [kind]: base[kind] + 1 };
+        }),
     };
   }, [
     auth,

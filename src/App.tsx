@@ -10,6 +10,7 @@ import { SsbTrainingPage } from './pages/ssb/SsbTrainingPage';
 import { ExpertConsultationPage } from './pages/ExpertConsultationPage';
 import { HelpCenterPage } from './pages/HelpCenterPage';
 import { GlossaryPage } from './pages/GlossaryPage';
+import { FloatingAiAssistant } from './components/ai/FloatingAiAssistant';
 
 function RootGate() {
   const appState = useAppState();
@@ -40,6 +41,10 @@ function App() {
           <Route path="/help" element={<HelpCenterPage />} />
           <Route path="/glossary" element={<GlossaryPage />} />
         </Routes>
+        {/* Mounted outside Routes so it persists across navigation — the
+            conversation survives moving between pages instead of resetting.
+            It renders nothing until setup is complete. */}
+        <FloatingAiAssistant />
       </BrowserRouter>
     </AppStateProvider>
   );

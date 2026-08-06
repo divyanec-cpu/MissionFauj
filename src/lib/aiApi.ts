@@ -1,7 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 const REQUEST_TIMEOUT_MS = 30_000;
 
-export type AiSurface = 'ssb' | 'digest';
+export type AiSurface = 'ssb' | 'digest' | 'general';
 
 export async function askAi(surface: AiSurface, question: string, context?: string): Promise<string> {
   const controller = new AbortController();
