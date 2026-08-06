@@ -14,7 +14,11 @@ export const SSB_ENTRY_SCHEMES = [
   'NCC Special Entry',
   'UES',
   'JAG',
+  // The two serving-personnel routes to a commission: ACC for Army soldiers,
+  // CW for Navy sailors. Kept adjacent since candidates for one are usually
+  // weighing the other.
   'ACC',
+  'CW (Navy — Sailor to Officer)',
   'TA',
 ];
 
