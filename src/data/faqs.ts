@@ -62,6 +62,6 @@ export const FAQS: Faq[] = [
   },
   {
     q: 'Where do I find the AI Assistant?',
-    a: 'The "Ask AI" button sits in the bottom corner of every page once you are signed in, and your conversation stays with you as you move around the app. There are also two focused versions: one inside SSB Training for psychology and interview preparation, and one attached to each Current Affairs brief for questions about that specific story.',
+    a: 'The "Ask MF" button sits in the bottom corner of every page once you are signed in, and your conversation stays with you as you move around the app. There are also two focused versions: one inside SSB Training for psychology and interview preparation, and one attached to each Current Affairs brief for questions about that specific story.',
   },
 ];

@@ -61,7 +61,7 @@ export function FloatingAiAssistant() {
           aria-label="Open AI assistant"
           className="font-heading clip-button fixed right-4 bottom-4 z-40 cursor-pointer border-none bg-amber px-5 py-3.5 text-xs font-bold tracking-wide text-[#1b1500] uppercase sm:right-6 sm:bottom-6"
         >
-          Ask AI
+          Ask MF
         </button>
       )}
 
